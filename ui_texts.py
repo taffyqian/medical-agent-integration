@@ -9,7 +9,7 @@ TEXTS = {
         "new_session": "新会话",
         "input_heading": "输入症状",
         "input_label": "症状（逗号分隔）",
-        "input_placeholder": "描述你的症状...",
+        "input_placeholder": "描述症状，或回答上方追问...",
         "name_label": "姓名",
         "name_placeholder": "例如：Tom",
         "analyze": "开始分析",
@@ -63,6 +63,13 @@ TEXTS = {
         "cause_possible": "可能",
         "cause_less_common": "较少见",
         "cause_disclaimer": "以上为常见可能性参考，不构成诊断。如症状持续或加重，请咨询医生。",
+        "followup_prompt": "你可以继续回答或描述",
+        "conversation_summary": "本次对话总结",
+        "summary_symptoms": "症状（累计）",
+        "summary_severity": "严重程度",
+        "summary_causes": "可能原因",
+        "summary_drugs": "推荐药品",
+        "summary_appointment": "预约时间",
     },
     "zh-Hant": {
         "title": "Medical Agent",
@@ -72,7 +79,7 @@ TEXTS = {
         "new_session": "新會話",
         "input_heading": "輸入症狀",
         "input_label": "症狀（逗號分隔）",
-        "input_placeholder": "描述你的症狀...",
+        "input_placeholder": "描述症狀，或回答上方追問...",
         "name_label": "姓名",
         "name_placeholder": "例如：Tom",
         "analyze": "開始分析",
@@ -126,6 +133,13 @@ TEXTS = {
         "cause_possible": "可能",
         "cause_less_common": "較少見",
         "cause_disclaimer": "以上為常見可能性參考，不構成診斷。如症狀持續或加重，請諮詢醫生。",
+        "followup_prompt": "你可以繼續回答或描述",
+        "conversation_summary": "本次對話總結",
+        "summary_symptoms": "症狀（累計）",
+        "summary_severity": "嚴重程度",
+        "summary_causes": "可能原因",
+        "summary_drugs": "推薦藥品",
+        "summary_appointment": "預約時間",
     },
     "en": {
         "title": "Medical Agent",
@@ -135,7 +149,7 @@ TEXTS = {
         "new_session": "New Session",
         "input_heading": "Enter Symptoms",
         "input_label": "Symptoms (comma-separated)",
-        "input_placeholder": "Describe your symptoms...",
+        "input_placeholder": "Describe symptoms or answer the follow-up questions above...",
         "name_label": "Name",
         "name_placeholder": "e.g. Tom",
         "analyze": "Analyze",
@@ -189,6 +203,13 @@ TEXTS = {
         "cause_possible": "Possible",
         "cause_less_common": "Less Common",
         "cause_disclaimer": "These are common possibilities for reference only, not a diagnosis. Consult a doctor if symptoms persist or worsen.",
+        "followup_prompt": "You can continue answering or describing",
+        "conversation_summary": "Conversation Summary",
+        "summary_symptoms": "Symptoms (cumulative)",
+        "summary_severity": "Severity",
+        "summary_causes": "Possible Causes",
+        "summary_drugs": "Recommended Drugs",
+        "summary_appointment": "Appointment",
     },
 }
 
@@ -241,6 +262,9 @@ DRUG_NAME_CN = {
     "magnesium hydroxide": "氢氧化镁",
     "guaifenesin": "愈创木酚甘油醚",
     "phenylephrine": "去氧肾上腺素",
+    "benzocaine": "苯佐卡因",
+    "benzocaine lozenges": "苯佐卡因含片",
+    "chloraseptic": "氯己定",
 }
 
 DRUG_NAME_TW = {
@@ -263,6 +287,9 @@ DRUG_NAME_TW = {
     "magnesium hydroxide": "氫氧化鎂",
     "guaifenesin": "癒創木酚甘油醚",
     "phenylephrine": "去氧腎上腺素",
+    "benzocaine": "苯佐卡因",
+    "benzocaine lozenges": "苯佐卡因含片",
+    "chloraseptic": "氯己定",
 }
 
 

@@ -110,6 +110,9 @@ def render_result_turn(t, r, turn_input, turn_no):
         f"{t('turn', n=turn_no)}  ·  {', '.join(turn_input)}",
         expanded=(turn_no == len(st.session_state.get("history", []))),
     ):
+        # =========================================================
+        # 紧急分支
+        # =========================================================
         if r["action"] == "emergency_escalation":
             lang = st.session_state["lang"]
             if lang == "zh-Hant":
@@ -153,6 +156,10 @@ def render_result_turn(t, r, turn_input, turn_no):
                 f'</div>'
             )
             st.markdown(emergency_html, unsafe_allow_html=True)
+
+        # =========================================================
+        # 非紧急分支
+        # =========================================================
         else:
             sev = r.get("severity", "-")
             normal_html = (
@@ -189,58 +196,68 @@ def render_result_turn(t, r, turn_input, turn_no):
                     if condition:
                         cause_rows += (
                             f'<div style="display:flex;gap:0.8rem;'
-                            f'align-items:flex-start;'
-                            f'padding:0.5rem 0.9rem;'
-                            f'margin-bottom:0.35rem;'
-                            f'background:#f8fafc;'
-                            f'border-left:3px solid {color};'
-                            f'border-radius:6px;">'
+                            f'align-items:flex-start;padding:0.5rem 0.9rem;'
+                            f'margin-bottom:0.35rem;background:#f8fafc;'
+                            f'border-left:3px solid {color};border-radius:6px;">'
                             f'<div style="flex-shrink:0;min-width:58px;'
-                            f'font-size:0.72rem;font-weight:700;'
-                            f'color:{color};padding-top:0.15rem;">'
-                            f'{lbl}</div>'
+                            f'font-size:0.72rem;font-weight:700;color:{color};'
+                            f'padding-top:0.15rem;">{lbl}</div>'
                             f'<div style="font-size:0.88rem;color:#0f172a;'
                             f'line-height:1.5;">'
                             f'<strong>{condition}</strong>'
                             + (f' <span style="color:#64748b;">— {note}</span>' if note else "") +
-                            f'</div>'
-                            f'</div>'
+                            f'</div></div>'
                         )
 
                 cause_html = (
                     '<div style="background:#ffffff;'
-                    'border:1px solid #cbd5e1;'
-                    'border-radius:10px;'
-                    'padding:0;'
-                    'margin-top:0.6rem;'
-                    'overflow:hidden;">'
-                    '<div style="background:#f1f5f9;'
-                    'padding:0.5rem 1rem;'
+                    'border:1px solid #cbd5e1;border-radius:10px;'
+                    'padding:0;margin-top:0.6rem;overflow:hidden;">'
+                    '<div style="background:#f1f5f9;padding:0.5rem 1rem;'
                     'display:flex;align-items:center;gap:0.5rem;">'
                     '<span style="font-size:0.95rem;">🔍</span>'
                     '<span style="font-size:0.82rem;font-weight:800;'
                     'color:#334155;letter-spacing:0.8px;'
                     'text-transform:uppercase;">'
                     + t("possible_causes") +
-                    '</span>'
-                    '</div>'
+                    '</span></div>'
                     '<div style="padding:0.7rem 0.8rem;">'
                     + cause_rows +
                     '</div>'
-                    '<div style="padding:0.5rem 1rem;'
-                    'background:#fffbeb;'
-                    'border-top:1px solid #fef3c7;'
-                    'font-size:0.78rem;'
-                    'color:#92400e;">'
-                    '⚠️ ' + t("cause_disclaimer") +
-                    '</div>'
-                    '</div>'
+                    '<div style="padding:0.5rem 1rem;background:#fffbeb;'
+                    'border-top:1px solid #fef3c7;font-size:0.78rem;'
+                    'color:#92400e;">⚠️ ' + t("cause_disclaimer") +
+                    '</div></div>'
                 )
                 st.markdown(cause_html, unsafe_allow_html=True)
 
+            # ---- 推荐药品 ----
             recs = r.get("recommendations", [])
             if recs:
-                st.markdown(f"**{t('drugs')}**")
+                # 卡片式标题（浅灰底 + 左青条 + 图标）
+                st.markdown(
+                    f'<div style="'
+                    f'background:#f1f5f9;'
+                    f'border-left:3px solid #0e7490;'
+                    f'border-radius:8px;'
+                    f'padding:0.55rem 1rem;'
+                    f'margin-top:1.2rem;'
+                    f'margin-bottom:0.6rem;'
+                    f'display:flex;align-items:center;gap:0.5rem;'
+                    f'">'
+                    f'<span style="font-size:0.95rem;">💊</span>'
+                    f'<span style="font-size:0.85rem;font-weight:800;'
+                    f'color:#0e7490;letter-spacing:0.6px;'
+                    f'text-transform:uppercase;">'
+                    f'{t("drugs")}'
+                    f'</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+                # 收集追问（供 app.py 底部显示）
+                all_questions = []
+
                 for rec in recs:
                     info = rec.get("drug_info", {})
                     brand = info.get("brand_name", "-") if info.get("ok") else "-"
@@ -249,6 +266,7 @@ def render_result_turn(t, r, turn_input, turn_no):
                         rec["drug_name"], st.session_state["lang"]
                     )
 
+                    # --- 药品卡 ---
                     drug_html = (
                         f'<div class="drug-card">'
                         f'<div class="drug-name">💊 {display_name}</div>'
@@ -258,6 +276,7 @@ def render_result_turn(t, r, turn_input, turn_no):
                     )
                     st.markdown(drug_html, unsafe_allow_html=True)
 
+                    # --- 医疗建议 ---
                     advice_rows = []
                     if rec.get("usage_advice"):
                         advice_rows.append((t("usage_advice"), rec["usage_advice"], "#0e7490", "#f0fdfa"))
@@ -273,51 +292,40 @@ def render_result_turn(t, r, turn_input, turn_no):
                             margin = "" if is_last else "margin-bottom:0.4rem;"
                             rows_html += (
                                 f'<div style="display:flex;gap:0.8rem;'
-                                f'align-items:flex-start;'
-                                f'background:{bg};'
-                                f'border-left:3px solid {color};'
-                                f'border-radius:6px;'
-                                f'padding:0.55rem 0.9rem;'
-                                f'{margin}">'
+                                f'align-items:flex-start;background:{bg};'
+                                f'border-left:3px solid {color};border-radius:6px;'
+                                f'padding:0.55rem 0.9rem;{margin}">'
                                 f'<div style="flex-shrink:0;min-width:70px;'
-                                f'font-size:0.82rem;font-weight:700;'
-                                f'color:{color};letter-spacing:0.2px;'
-                                f'line-height:1.5;">{label}</div>'
+                                f'font-size:0.82rem;font-weight:700;color:{color};'
+                                f'letter-spacing:0.2px;line-height:1.5;">{label}</div>'
                                 f'<div style="font-size:0.88rem;color:#0f172a;'
                                 f'line-height:1.5;">{text}</div>'
                                 f'</div>'
                             )
-
                         advice_html = (
                             '<div style="background:#ffffff;'
-                            'border:1px solid #99f6e4;'
-                            'border-radius:10px;'
-                            'padding:0;'
-                            'margin-top:0.6rem;'
-                            'overflow:hidden;">'
+                            'border:1px solid #99f6e4;border-radius:10px;'
+                            'padding:0;margin-top:0.6rem;overflow:hidden;">'
                             '<div style="background:linear-gradient(90deg,#0e7490,#14b8a6);'
-                            'padding:0.5rem 1rem;'
-                            'display:flex;align-items:center;gap:0.5rem;">'
+                            'padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem;">'
                             '<span style="font-size:0.95rem;">💡</span>'
                             '<span style="font-size:0.82rem;font-weight:800;'
                             'color:#ffffff;letter-spacing:0.8px;'
                             'text-transform:uppercase;">'
                             + t("medical_guidance") +
-                            '</span>'
-                            '</div>'
+                            '</span></div>'
                             '<div style="padding:0.7rem 0.8rem;">'
                             + rows_html +
-                            '</div>'
-                            '</div>'
+                            '</div></div>'
                         )
                         st.markdown(advice_html, unsafe_allow_html=True)
 
-                    fqs = rec.get("followup_questions", [])
-                    if fqs:
-                        st.markdown(f"**❓ {t('followup')}**")
-                        for q in fqs:
-                            st.markdown(f"- {q}")
+                    # --- 收集追问 ---
+                    for q in rec.get("followup_questions", []):
+                        if q and q not in all_questions:
+                            all_questions.append(q)
 
+                    # --- FDA 警告折叠 ---
                     if info.get("ok") and info.get("warnings"):
                         with st.expander(f"📄 {t('view_warnings')}"):
                             formatted = format_fda_warnings(
@@ -330,6 +338,11 @@ def render_result_turn(t, r, turn_input, turn_no):
                     elif not info.get("ok"):
                         st.caption(t("no_fda"))
 
+                # 把追问存到 result
+                if all_questions:
+                    r["_followup_questions"] = all_questions
+
+            # ---- 预约 ----
             appt = r.get("appointment", {})
             if appt.get("scheduled"):
                 local_time = format_local_time(
@@ -345,6 +358,7 @@ def render_result_turn(t, r, turn_input, turn_no):
                 )
                 st.markdown(appt_html, unsafe_allow_html=True)
 
+        # ---- 事件流 ----
         with st.expander(f"🔍 {t('event_log')}"):
             events_html = '<div class="card" style="padding:0.75rem 1rem;">'
             for event in r["state"]["events"]:
