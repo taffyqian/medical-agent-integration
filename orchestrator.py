@@ -1,17 +1,4 @@
-"""
-Medical Agent Orchestrator
---------------------------
-多步工作流编排器，显式管理会话状态（Azure Blob Storage, Managed Identity）。
-
-工作流：
-  1. 紧急检测（条件分支）—— 命中则直接返回，跳过后续
-  2. 症状分析（顺序）
-  3. 药品查询（顺序）
-  4. 预约安排（顺序）
-  5. 写回会话状态
-
-会话状态存于 Blob Storage 的 sessions 容器，每个 session 一个 JSON 文件。
-"""
+"""Medical Agent Orchestrator"""
 import json
 import os
 import sys
@@ -25,11 +12,6 @@ from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
 load_dotenv()
-
-
-# ---------------------------------------------------------------------------
-# 配置
-# ---------------------------------------------------------------------------
 
 FUNCTION_BASE = os.environ["FUNCTION_BASE"]
 FUNCTION_KEY = os.environ["FUNCTION_APP_KEY"]
@@ -48,10 +30,6 @@ def _get_blob_service() -> BlobServiceClient:
         )
     return _blob_service
 
-
-# ---------------------------------------------------------------------------
-# 调用 Function App
-# ---------------------------------------------------------------------------
 
 def _call_function(path: str, payload: Dict) -> Dict:
     url = f"{FUNCTION_BASE}/{path}"
@@ -86,10 +64,6 @@ def schedule_appointment(patient_name: str, reason: str, when: Optional[str] = N
     return _call_function("schedule_appointment", payload)
 
 
-# ---------------------------------------------------------------------------
-# 会话状态（Blob Storage）
-# ---------------------------------------------------------------------------
-
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -106,7 +80,6 @@ def load_session(session_id: str) -> Dict:
         data = client.download_blob().readall()
         return json.loads(data)
     except Exception:
-        # 首次会话，返回初始结构
         return {
             "session_id": session_id,
             "created_at": _now_iso(),
@@ -133,27 +106,14 @@ def save_session(session_id: str, state: Dict) -> None:
     )
 
 
-# ---------------------------------------------------------------------------
-# Orchestrator 核心
-# ---------------------------------------------------------------------------
-
 def orchestrate(
     session_id: str,
     symptoms: List[str],
     patient_name: Optional[str] = None,
+    progress_callback=None,
 ) -> Dict:
-    """
-    多步工作流：
-      Step 0: 读会话状态，追加本次症状
-      Step 1: 紧急检测（条件）—— 命中直接返回
-      Step 2: 症状分析（顺序）
-      Step 3: 药品查询（顺序）
-      Step 4: 预约安排（顺序）
-      Step 5: 写回会话状态
-    """
     state = load_session(session_id)
 
-    # --- Step 0: 更新症状历史 ---
     if patient_name:
         state["patient_name"] = patient_name
     for s in symptoms:
@@ -168,7 +128,8 @@ def orchestrate(
         "symptoms": symptoms,
     })
 
-    # --- Step 1: 紧急检测（条件分支）---
+    if progress_callback:
+        progress_callback("emergency_check")
     emerg = emergency_escalator(symptoms)
     state["events"].append({
         "stage": "emergency_check",
@@ -190,19 +151,27 @@ def orchestrate(
                 "drug_lookup",
                 "schedule_appointment",
             ],
+            "disclaimer": {
+                "zh": "这是一般性信息，不能替代专业医疗建议。如有医疗问题，请联系医疗保健提供者。",
+                "en": "This is general information and does not replace professional medical advice. For medical concerns, contact a healthcare provider.",
+            },
             "state": state,
         }
 
-    # --- Step 2: 症状分析（顺序）---
-    analysis = analyze_symptoms(state["symptoms_history"])
+    if progress_callback:
+        progress_callback("symptom_analysis")
+    analysis = analyze_symptoms(symptoms)
     state["severity"] = analysis.get("assessed_severity")
+    possible_causes = analysis.get("possible_causes", [])
+    ai_disclaimer = analysis.get("disclaimer", "")
     state["events"].append({
         "stage": "symptom_analysis",
         "at": _now_iso(),
         "result": analysis,
     })
 
-    # --- Step 3: 药品查询（顺序）---
+    if progress_callback:
+        progress_callback("drug_lookup")
     recommendations = analysis.get("recommendations", [])
     enriched = []
     for rec in recommendations:
@@ -214,6 +183,10 @@ def orchestrate(
             "symptoms": rec.get("symptoms", []),
             "drug_name": drug_name,
             "drug_info": info,
+            "usage_advice": rec.get("usage_advice", ""),
+            "self_care": rec.get("self_care", ""),
+            "when_to_seek_help": rec.get("when_to_seek_help", ""),
+            "followup_questions": rec.get("followup_questions", []),
         })
         state["events"].append({
             "stage": "drug_lookup",
@@ -223,8 +196,9 @@ def orchestrate(
         })
     state["recommendations"] = enriched
 
-    # --- Step 4: 预约（顺序）---
-    reason = ", ".join(state["symptoms_history"])
+    if progress_callback:
+        progress_callback("appointment")
+    reason = ", ".join(symptoms)
     appointment = schedule_appointment(
         patient_name=state.get("patient_name") or "Unknown",
         reason=reason,
@@ -236,7 +210,8 @@ def orchestrate(
         "result": appointment,
     })
 
-    # --- Step 5: 写回 ---
+    if progress_callback:
+        progress_callback("completed")
     state["workflow_stage"] = "completed"
     save_session(session_id, state)
 
@@ -244,15 +219,17 @@ def orchestrate(
         "session_id": session_id,
         "action": "full_workflow",
         "severity": state["severity"],
+        "possible_causes": possible_causes,
         "recommendations": enriched,
         "appointment": appointment,
+        "disclaimer": {
+            "zh": "这是一般性信息，不能替代专业医疗建议。如有医疗问题，请联系医疗保健提供者。",
+            "en": "This is general information and does not replace professional medical advice. For medical concerns, contact a healthcare provider.",
+        },
+        "ai_disclaimer": ai_disclaimer,
         "state": state,
     }
 
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
 
 def main():
     if len(sys.argv) < 2:
