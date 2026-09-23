@@ -21,9 +21,10 @@ SESSION_CONTAINER = os.environ.get("SESSION_CONTAINER", "sessions")
 _blob_service: Optional[BlobServiceClient] = None
 
 
-def _get_blob_service() -> BlobServiceClient:
-    _blob_service: Optional[BlobServiceClient] = None
+_blob_service = None
 
+
+def _get_blob_service() -> BlobServiceClient:
     global _blob_service
     if _blob_service is None:
         conn_str = os.environ.get("SESSION_STORAGE_CONN")
