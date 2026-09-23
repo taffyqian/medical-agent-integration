@@ -22,12 +22,20 @@ _blob_service: Optional[BlobServiceClient] = None
 
 
 def _get_blob_service() -> BlobServiceClient:
+    _blob_service: Optional[BlobServiceClient] = None
+
     global _blob_service
     if _blob_service is None:
-        _blob_service = BlobServiceClient(
-            account_url=STORAGE_ACCOUNT_URL,
-            credential=DefaultAzureCredential(),
-        )
+        conn_str = os.environ.get("SESSION_STORAGE_CONN")
+        if conn_str:
+            # 云端（Streamlit Cloud）走连接字符串
+            _blob_service = BlobServiceClient.from_connection_string(conn_str)
+        else:
+            # 本地走 DefaultAzureCredential
+            _blob_service = BlobServiceClient(
+                account_url=STORAGE_ACCOUNT_URL,
+                credential=DefaultAzureCredential(),
+            )
     return _blob_service
 
 
