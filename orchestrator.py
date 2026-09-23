@@ -18,9 +18,6 @@ FUNCTION_KEY = os.environ["FUNCTION_APP_KEY"]
 STORAGE_ACCOUNT_URL = os.environ["STORAGE_ACCOUNT_URL"]
 SESSION_CONTAINER = os.environ.get("SESSION_CONTAINER", "sessions")
 
-_blob_service: Optional[BlobServiceClient] = None
-
-
 _blob_service = None
 
 
