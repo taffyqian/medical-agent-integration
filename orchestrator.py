@@ -1,4 +1,6 @@
-"""Medical Agent Orchestrator"""
+"""
+Medical Agent Orchestrator
+"""
 import json
 import os
 import sys
@@ -26,14 +28,20 @@ def _get_blob_service() -> BlobServiceClient:
     if _blob_service is None:
         conn_str = os.environ.get("SESSION_STORAGE_CONN")
         if conn_str:
+            # 云端（Streamlit Cloud）走连接字符串
             _blob_service = BlobServiceClient.from_connection_string(conn_str)
         else:
+            # 本地走 DefaultAzureCredential
             _blob_service = BlobServiceClient(
                 account_url=STORAGE_ACCOUNT_URL,
                 credential=DefaultAzureCredential(),
             )
     return _blob_service
 
+
+# =====================================================================
+# 调 Function App
+# =====================================================================
 
 def _call_function(path: str, payload: Dict) -> Dict:
     url = f"{FUNCTION_BASE}/{path}"
@@ -53,32 +61,24 @@ def emergency_escalator(symptoms: List[str]) -> Dict:
     return _call_function("emergency_escalator", {"symptoms": symptoms})
 
 
-def analyze_symptoms(symptoms: List[str], lang: str = "zh-Hans") -> Dict:
-    return _call_function(
-        "analyze_symptoms",
-        {"symptoms_list": symptoms, "lang": lang},
-    )
+def analyze_symptoms(symptoms: List[str]) -> Dict:
+    return _call_function("analyze_symptoms", {"symptoms_list": symptoms})
 
 
 def drug_lookup(drug_name: str) -> Dict:
     return _call_function("drug_lookup", {"drug_name": drug_name})
 
 
-def schedule_appointment(
-    patient_name: str,
-    reason: str,
-    when: Optional[str] = None,
-    lang: str = "zh-Hans",
-) -> Dict:
-    payload: Dict[str, Any] = {
-        "patient_name": patient_name,
-        "reason": reason,
-        "lang": lang,
-    }
+def schedule_appointment(patient_name: str, reason: str, when: Optional[str] = None) -> Dict:
+    payload: Dict[str, Any] = {"patient_name": patient_name, "reason": reason}
     if when:
         payload["when"] = when
     return _call_function("schedule_appointment", payload)
 
+
+# =====================================================================
+# 会话状态（Blob Storage）
+# =====================================================================
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -122,6 +122,10 @@ def save_session(session_id: str, state: Dict) -> None:
     )
 
 
+# =====================================================================
+# Orchestrator 核心
+# =====================================================================
+
 def orchestrate(
     session_id: str,
     symptoms: List[str],
@@ -133,7 +137,7 @@ def orchestrate(
     if patient_name:
         state["patient_name"] = patient_name
 
-    # --- Step 0: 记录原始输入（审计用，不进入 symptoms_history）---
+    # --- Step 0: 记录原始输入（审计用）---
     state["events"].append({
         "stage": "input_received",
         "at": _now_iso(),
@@ -151,12 +155,13 @@ def orchestrate(
     })
 
     if emerg.get("is_emergency"):
-        # 紧急：直接用原句加入历史
-        for s in symptoms:
+        # 紧急：用 emergency_escalator 返回的标准化症状
+        normalized = emerg.get("normalized") or symptoms
+        for s in normalized:
             if s not in state["symptoms_history"]:
                 state["symptoms_history"].append(s)
-        if symptoms:
-            state["most_recent_symptom"] = symptoms[-1]
+        if normalized:
+            state["most_recent_symptom"] = normalized[-1]
 
         state["severity"] = "emergency"
         state["workflow_stage"] = "escalated"
@@ -186,14 +191,13 @@ def orchestrate(
     possible_causes = analysis.get("possible_causes", [])
     ai_disclaimer = analysis.get("disclaimer", "")
 
-    # 用 AI 返回的**标准化症状**更新 symptoms_history
+    # 用 AI 返回的标准化症状更新 symptoms_history
     ai_normalized = []
     for rec in analysis.get("recommendations", []):
         sym = rec.get("symptom")
         if sym and sym not in ai_normalized:
             ai_normalized.append(sym)
 
-    # 优先用 AI 标准化症状；如果 AI 返回空，回退到原句
     normalized_for_history = ai_normalized if ai_normalized else symptoms
     for s in normalized_for_history:
         if s not in state["symptoms_history"]:
@@ -271,6 +275,10 @@ def orchestrate(
         "state": state,
     }
 
+
+# =====================================================================
+# CLI
+# =====================================================================
 
 def main():
     if len(sys.argv) < 2:
