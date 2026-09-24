@@ -21,11 +21,35 @@ STORAGE_ACCOUNT_URL = os.environ["STORAGE_ACCOUNT_URL"]
 SESSION_CONTAINER = os.environ.get("SESSION_CONTAINER", "sessions")
 
 # =====================================================================
-# 固定 disclaimer（不依赖 AI 生成）
+# 固定 i18n 文案（简体 / 繁体 / 英文）
 # =====================================================================
-DISCLAIMER_ZH = "以上为常见可能性参考，不构成诊断。如症状持续或加重，请咨询医生。"
+DISCLAIMER_ZH_HANS = "以上为常见可能性参考，不构成诊断。如症状持续或加重，请咨询医生。"
+DISCLAIMER_ZH_HANT = "以上為常見可能性參考，不構成診斷。如症狀持續或加重，請諮詢醫生。"
 DISCLAIMER_EN = ("This is for reference only, not a diagnosis. "
                  "Consult a doctor if symptoms persist or worsen.")
+
+EMERGENCY_MSG_ZH_HANS = "这些症状可能属于医疗紧急情况，请立即拨打急救电话。"
+EMERGENCY_MSG_ZH_HANT = "這些症狀可能屬於醫療緊急情況，請立即撥打急救電話。"
+EMERGENCY_MSG_EN = ("These symptoms may indicate a medical emergency. "
+                    "Call emergency services immediately.")
+
+
+def _pick(lang: str, zh_hans: str, zh_hant: str, en: str) -> str:
+    """按 lang 选文案。"""
+    if lang == "zh-Hant":
+        return zh_hant
+    if lang == "en":
+        return en
+    return zh_hans
+
+
+def _fixed_disclaimer(lang: str) -> str:
+    return _pick(lang, DISCLAIMER_ZH_HANS, DISCLAIMER_ZH_HANT, DISCLAIMER_EN)
+
+
+def _fixed_emergency_msg(lang: str) -> str:
+    return _pick(lang, EMERGENCY_MSG_ZH_HANS, EMERGENCY_MSG_ZH_HANT, EMERGENCY_MSG_EN)
+
 
 _blob_service = None
 
@@ -35,10 +59,8 @@ def _get_blob_service() -> BlobServiceClient:
     if _blob_service is None:
         conn_str = os.environ.get("SESSION_STORAGE_CONN")
         if conn_str:
-            # 云端（Streamlit Cloud）走连接字符串
             _blob_service = BlobServiceClient.from_connection_string(conn_str)
         else:
-            # 本地走 DefaultAzureCredential
             _blob_service = BlobServiceClient(
                 account_url=STORAGE_ACCOUNT_URL,
                 credential=DefaultAzureCredential(),
@@ -154,10 +176,10 @@ def orchestrate(
     if patient_name:
         state["patient_name"] = patient_name
 
-    # 固定 disclaimer（按语言）
-    fixed_disclaimer = DISCLAIMER_ZH if lang.startswith("zh") else DISCLAIMER_EN
+    fixed_disclaimer = _fixed_disclaimer(lang)
+    fixed_emergency_msg = _fixed_emergency_msg(lang)
 
-    # --- Step 0: 记录原始输入（审计用）---
+    # --- Step 0: 记录原始输入 ---
     state["events"].append({
         "stage": "input_received",
         "at": _now_iso(),
@@ -176,7 +198,6 @@ def orchestrate(
     })
 
     if emerg.get("is_emergency"):
-        # 紧急：用 emergency_escalator 返回的标准化症状
         normalized = emerg.get("normalized") or symptoms
         for s in normalized:
             if s not in state["symptoms_history"]:
@@ -190,8 +211,9 @@ def orchestrate(
         return {
             "session_id": session_id,
             "action": "emergency_escalation",
-            "message": emerg.get("message", "请立即就医。"),
+            "message": fixed_emergency_msg,
             "matched": emerg.get("matched", []),
+            "normalized": emerg.get("normalized", []),
             "skipped": [
                 "analyze_symptoms",
                 "drug_lookup",
@@ -201,17 +223,15 @@ def orchestrate(
             "state": state,
         }
 
-    # --- Step 2: 症状分析（AI 返回标准化症状）---
+    # --- Step 2: 症状分析 ---
     if progress_callback:
         progress_callback("symptom_analysis")
     analysis = analyze_symptoms(symptoms, lang=lang)
     state["severity"] = analysis.get("assessed_severity")
     possible_causes = analysis.get("possible_causes", [])
 
-    # 用 AI 返回的标准化症状更新 symptoms_history
     ai_normalized = []
     for rec in analysis.get("recommendations", []):
-        # 兼容 "symptoms"（复数 list）和 "symptom"（单数 str）
         syms = rec.get("symptoms") or rec.get("symptom")
         if isinstance(syms, str):
             syms = [syms]
@@ -243,7 +263,6 @@ def orchestrate(
         if not drug_name:
             continue
         info = rec.get("drug_info") or drug_lookup(drug_name)
-        # 用 "symptoms"（list）统一
         syms = rec.get("symptoms") or rec.get("symptom")
         if isinstance(syms, str):
             syms = [syms]
@@ -264,7 +283,7 @@ def orchestrate(
         })
     state["recommendations"] = enriched
 
-    # --- Step 4: 预约（用标准化症状名）---
+    # --- Step 4: 预约 ---
     if progress_callback:
         progress_callback("appointment")
     reason = ", ".join(normalized_for_history)
@@ -293,7 +312,6 @@ def orchestrate(
         "possible_causes": possible_causes,
         "recommendations": enriched,
         "appointment": appointment,
-        # 固定 disclaimer（不用 AI 返回的）
         "disclaimer": fixed_disclaimer,
         "state": state,
     }
