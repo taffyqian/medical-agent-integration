@@ -276,7 +276,6 @@ if user_input and user_input.strip():
                         symptoms,
                         st.session_state.get("patient_name") or None,
                         progress_callback=on_progress,
-                        lang=st.session_state["lang"],
                     )
                     status.update(
                         label="✅ " + t("stage_completed"),
