@@ -26,10 +26,8 @@ def _get_blob_service() -> BlobServiceClient:
     if _blob_service is None:
         conn_str = os.environ.get("SESSION_STORAGE_CONN")
         if conn_str:
-            # 云端（Streamlit Cloud）走连接字符串
             _blob_service = BlobServiceClient.from_connection_string(conn_str)
         else:
-            # 本地走 DefaultAzureCredential
             _blob_service = BlobServiceClient(
                 account_url=STORAGE_ACCOUNT_URL,
                 credential=DefaultAzureCredential(),
@@ -55,16 +53,28 @@ def emergency_escalator(symptoms: List[str]) -> Dict:
     return _call_function("emergency_escalator", {"symptoms": symptoms})
 
 
-def analyze_symptoms(symptoms: List[str]) -> Dict:
-    return _call_function("analyze_symptoms", {"symptoms_list": symptoms})
+def analyze_symptoms(symptoms: List[str], lang: str = "zh-Hans") -> Dict:
+    return _call_function(
+        "analyze_symptoms",
+        {"symptoms_list": symptoms, "lang": lang},
+    )
 
 
 def drug_lookup(drug_name: str) -> Dict:
     return _call_function("drug_lookup", {"drug_name": drug_name})
 
 
-def schedule_appointment(patient_name: str, reason: str, when: Optional[str] = None) -> Dict:
-    payload: Dict[str, Any] = {"patient_name": patient_name, "reason": reason}
+def schedule_appointment(
+    patient_name: str,
+    reason: str,
+    when: Optional[str] = None,
+    lang: str = "zh-Hans",
+) -> Dict:
+    payload: Dict[str, Any] = {
+        "patient_name": patient_name,
+        "reason": reason,
+        "lang": lang,
+    }
     if when:
         payload["when"] = when
     return _call_function("schedule_appointment", payload)
@@ -117,6 +127,7 @@ def orchestrate(
     symptoms: List[str],
     patient_name: Optional[str] = None,
     progress_callback=None,
+    lang: str = "zh-Hans",
 ) -> Dict:
     state = load_session(session_id)
 
@@ -166,7 +177,7 @@ def orchestrate(
 
     if progress_callback:
         progress_callback("symptom_analysis")
-    analysis = analyze_symptoms(symptoms)
+    analysis = analyze_symptoms(symptoms, lang=lang)
     state["severity"] = analysis.get("assessed_severity")
     possible_causes = analysis.get("possible_causes", [])
     ai_disclaimer = analysis.get("disclaimer", "")
@@ -208,6 +219,7 @@ def orchestrate(
     appointment = schedule_appointment(
         patient_name=state.get("patient_name") or "Unknown",
         reason=reason,
+        lang=lang,
     )
     state["appointment"] = appointment
     state["events"].append({
