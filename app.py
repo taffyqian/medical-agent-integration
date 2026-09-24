@@ -104,9 +104,13 @@ if len(st.session_state.history) >= 2:
         r = turn["result"]
         if r.get("action") == "emergency_escalation":
             all_severities.append("emergency")
-            matched = r.get("matched", [])
-            if matched:
-                emergency_symptoms.extend(matched)
+            normalized = r.get("normalized", [])
+            if normalized:
+                emergency_symptoms.extend(normalized)
+            else:
+                matched = r.get("matched", [])
+                if matched:
+                    emergency_symptoms.extend(matched)
         else:
             all_severities.append(r.get("severity", "mild"))
     severity_rank = {"emergency": 2, "moderate": 1, "mild": 0, "non-emergency": 0}
@@ -122,7 +126,7 @@ if len(st.session_state.history) >= 2:
     drugs_str = " · ".join([display_drug_name(d, st.session_state["lang"]) for d in all_drugs]) or "-"
     causes_str = " · ".join(all_causes) or "-"
     severity_display = latest_severity
-        if emergency_symptoms:
+    if emergency_symptoms:
         unique_emerg = list(set(emergency_symptoms))
         severity_display = f'{latest_severity} ({t("contains_emergency")}: {" · ".join(unique_emerg)})'
 
