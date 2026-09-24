@@ -75,12 +75,12 @@ for i, turn in enumerate(st.session_state.history):
 # 对话总结（多轮之后；最后一轮是紧急时仍显示，但会标红）
 # ============================================================
 if len(st.session_state.history) >= 2:
-    # 累计症状
-    all_symptoms = []
-    for turn in st.session_state.history:
-        for s in turn["input"]:
-            if s not in all_symptoms:
-                all_symptoms.append(s)
+    # 用标准化症状（从最新 state 读）
+    all_symptoms = (
+        st.session_state.history[-1]["result"]
+        .get("state", {})
+        .get("symptoms_history", [])
+    )
 
     # 汇总所有推荐药品（去重）
     all_drugs = []
