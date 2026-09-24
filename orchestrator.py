@@ -20,6 +20,13 @@ FUNCTION_KEY = os.environ["FUNCTION_APP_KEY"]
 STORAGE_ACCOUNT_URL = os.environ["STORAGE_ACCOUNT_URL"]
 SESSION_CONTAINER = os.environ.get("SESSION_CONTAINER", "sessions")
 
+# =====================================================================
+# 固定 disclaimer（不依赖 AI 生成）
+# =====================================================================
+DISCLAIMER_ZH = "以上为常见可能性参考，不构成诊断。如症状持续或加重，请咨询医生。"
+DISCLAIMER_EN = ("This is for reference only, not a diagnosis. "
+                 "Consult a doctor if symptoms persist or worsen.")
+
 _blob_service = None
 
 
@@ -61,16 +68,25 @@ def emergency_escalator(symptoms: List[str]) -> Dict:
     return _call_function("emergency_escalator", {"symptoms": symptoms})
 
 
-def analyze_symptoms(symptoms: List[str]) -> Dict:
-    return _call_function("analyze_symptoms", {"symptoms_list": symptoms})
+def analyze_symptoms(symptoms: List[str], lang: str = "zh-Hans") -> Dict:
+    return _call_function("analyze_symptoms", {
+        "symptoms_list": symptoms,
+        "lang": lang,
+    })
 
 
 def drug_lookup(drug_name: str) -> Dict:
     return _call_function("drug_lookup", {"drug_name": drug_name})
 
 
-def schedule_appointment(patient_name: str, reason: str, when: Optional[str] = None) -> Dict:
-    payload: Dict[str, Any] = {"patient_name": patient_name, "reason": reason}
+def schedule_appointment(patient_name: str, reason: str,
+                          when: Optional[str] = None,
+                          lang: str = "zh-Hans") -> Dict:
+    payload: Dict[str, Any] = {
+        "patient_name": patient_name,
+        "reason": reason,
+        "lang": lang,
+    }
     if when:
         payload["when"] = when
     return _call_function("schedule_appointment", payload)
@@ -131,20 +147,25 @@ def orchestrate(
     symptoms: List[str],
     patient_name: Optional[str] = None,
     progress_callback=None,
+    lang: str = "zh-Hans",
 ) -> Dict:
     state = load_session(session_id)
 
     if patient_name:
         state["patient_name"] = patient_name
 
+    # 固定 disclaimer（按语言）
+    fixed_disclaimer = DISCLAIMER_ZH if lang.startswith("zh") else DISCLAIMER_EN
+
     # --- Step 0: 记录原始输入（审计用）---
     state["events"].append({
         "stage": "input_received",
         "at": _now_iso(),
         "symptoms": symptoms,
+        "lang": lang,
     })
 
-    # --- Step 1: 紧急检测（用原始输入，因为关键词可能出现在整句中）---
+    # --- Step 1: 紧急检测 ---
     if progress_callback:
         progress_callback("emergency_check")
     emerg = emergency_escalator(symptoms)
@@ -176,25 +197,21 @@ def orchestrate(
                 "drug_lookup",
                 "schedule_appointment",
             ],
-            "disclaimer": {
-                "zh": "这是一般性信息，不能替代专业医疗建议。如有医疗问题，请联系医疗保健提供者。",
-                "en": "This is general information and does not replace professional medical advice. For medical concerns, contact a healthcare provider.",
-            },
+            "disclaimer": fixed_disclaimer,
             "state": state,
         }
 
     # --- Step 2: 症状分析（AI 返回标准化症状）---
     if progress_callback:
         progress_callback("symptom_analysis")
-    analysis = analyze_symptoms(symptoms)
+    analysis = analyze_symptoms(symptoms, lang=lang)
     state["severity"] = analysis.get("assessed_severity")
     possible_causes = analysis.get("possible_causes", [])
-    ai_disclaimer = analysis.get("disclaimer", "")
 
     # 用 AI 返回的标准化症状更新 symptoms_history
     ai_normalized = []
     for rec in analysis.get("recommendations", []):
-        # 云端返回 "symptoms"（复数，list）；兼容 "symptom"（单数，str）
+        # 兼容 "symptoms"（复数 list）和 "symptom"（单数 str）
         syms = rec.get("symptoms") or rec.get("symptom")
         if isinstance(syms, str):
             syms = [syms]
@@ -226,8 +243,12 @@ def orchestrate(
         if not drug_name:
             continue
         info = rec.get("drug_info") or drug_lookup(drug_name)
+        # 用 "symptoms"（list）统一
+        syms = rec.get("symptoms") or rec.get("symptom")
+        if isinstance(syms, str):
+            syms = [syms]
         enriched.append({
-            "symptoms": [rec.get("symptom")] if rec.get("symptom") else [],
+            "symptoms": syms or [],
             "drug_name": drug_name,
             "drug_info": info,
             "usage_advice": rec.get("usage_advice", ""),
@@ -250,6 +271,7 @@ def orchestrate(
     appointment = schedule_appointment(
         patient_name=state.get("patient_name") or "Unknown",
         reason=reason,
+        lang=lang,
     )
     state["appointment"] = appointment
     state["events"].append({
@@ -271,11 +293,8 @@ def orchestrate(
         "possible_causes": possible_causes,
         "recommendations": enriched,
         "appointment": appointment,
-        "disclaimer": {
-            "zh": "这是一般性信息，不能替代专业医疗建议。如有医疗问题，请联系医疗保健提供者。",
-            "en": "This is general information and does not replace professional medical advice. For medical concerns, contact a healthcare provider.",
-        },
-        "ai_disclaimer": ai_disclaimer,
+        # 固定 disclaimer（不用 AI 返回的）
+        "disclaimer": fixed_disclaimer,
         "state": state,
     }
 
