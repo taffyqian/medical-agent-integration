@@ -13,7 +13,7 @@ from ui_components import (
 
 st.set_page_config(
     page_title="Medical Agent",
-    page_icon="🏥",
+    page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -36,9 +36,18 @@ t = make_translator(st)
 # 侧边栏
 render_sidebar(t)
 
-# 主标题
+# 主标题（白大褂医生 SVG）
 st.markdown(
-    f'<div class="hero-title">🏥 {t("title")}</div>',
+    f'<div class="hero-title" style="display:flex;align-items:center;gap:0.7rem;">'
+    f'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" '
+    f'stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+    f'<circle cx="12" cy="6.5" r="3.5"/>'
+    f'<path d="M4.5 20.5v-2a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5v2"/>'
+    f'<path d="M12 13.5v7"/>'
+    f'<path d="M8.5 15c0 1.5 1.5 3 3.5 3s3.5-1.5 3.5-3"/>'
+    f'</svg>'
+    f'<span>{t("title")}</span>'
+    f'</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -122,7 +131,7 @@ if len(st.session_state.history) >= 2:
     if latest_appt.get("scheduled"):
         appt_time = format_local_time(latest_appt.get("slot_utc", ""), st.session_state["lang"])
 
-    sev_color = "#b91c1c" if latest_severity == "emergency" else "#15803d"
+    sev_color = "#b91c1c" if latest_severity == "emergency" else "#0d9488"
     drugs_str = " · ".join([display_drug_name(d, st.session_state["lang"]) for d in all_drugs]) or "-"
     causes_str = " · ".join(all_causes) or "-"
     severity_display = latest_severity
@@ -132,31 +141,31 @@ if len(st.session_state.history) >= 2:
 
     # ---- 对话总结卡片（grid 布局，标签/值严格分列）----
     sum_html = (
-        '<div style="background:#ffffff;border:1px solid #cbd5e1;'
-        'border-radius:12px;padding:1.2rem 1.5rem;margin-top:2rem;'
-        'margin-bottom:1rem;font-size:0.9rem;color:#334155;">'
+        '<div style="border-top:1px solid #e5e7eb;'
+        'padding-top:1.2rem;margin-top:2rem;margin-bottom:1rem;">'
         f'<div style="display:flex;align-items:center;gap:0.5rem;'
-        f'margin-bottom:1rem;font-weight:800;color:#0f172a;font-size:1rem;">'
+        f'margin-bottom:1rem;font-weight:800;color:#0a0a0a;font-size:1rem;'
+        f'letter-spacing:-0.2px;">'
         f'<span>📋</span><span>{t("conversation_summary")}</span></div>'
         '<div style="display:grid;grid-template-columns:170px 1fr;'
-        'gap:0.55rem 1rem;">'
+        'gap:0.6rem 1rem;font-size:0.9rem;">'
 
-        f'<div style="color:#64748b;font-weight:600;">{t("summary_symptoms")}</div>'
-        f'<div>' + " · ".join(all_symptoms) + '</div>'
+        f'<div style="color:#71717a;font-weight:600;">{t("summary_symptoms")}</div>'
+        f'<div style="color:#18181b;">' + " · ".join(all_symptoms) + '</div>'
 
-        f'<div style="color:#64748b;font-weight:600;">{t("summary_severity")}</div>'
+        f'<div style="color:#71717a;font-weight:600;">{t("summary_severity")}</div>'
         f'<div style="color:{sev_color};font-weight:600;">{severity_display}</div>'
 
-        f'<div style="color:#64748b;font-weight:600;">{t("summary_causes")}</div>'
-        f'<div>{causes_str}</div>'
+        f'<div style="color:#71717a;font-weight:600;">{t("summary_causes")}</div>'
+        f'<div style="color:#18181b;">{causes_str}</div>'
 
-        f'<div style="color:#64748b;font-weight:600;">{t("summary_drugs")}</div>'
-        f'<div>{drugs_str}</div>'
+        f'<div style="color:#71717a;font-weight:600;">{t("summary_drugs")}</div>'
+        f'<div style="color:#18181b;">{drugs_str}</div>'
     )
     if appt_time:
         sum_html += (
-            f'<div style="color:#64748b;font-weight:600;">{t("summary_appointment")}</div>'
-            f'<div>{appt_time}</div>'
+            f'<div style="color:#71717a;font-weight:600;">{t("summary_appointment")}</div>'
+            f'<div style="color:#18181b;font-family:SF Mono,Menlo,monospace;">{appt_time}</div>'
         )
     sum_html += '</div></div>'
     st.markdown(sum_html, unsafe_allow_html=True)

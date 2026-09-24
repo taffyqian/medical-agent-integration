@@ -126,7 +126,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
         f"{t('turn', n=turn_no)}  ·  {', '.join(turn_input)}",
         expanded=(turn_no == len(st.session_state.get("history", []))),
     ):
-        # ---------- 紧急分支（克制红卡）----------
+        # ---------- 紧急分支 ----------
         if r["action"] == "emergency_escalation":
             lang = st.session_state["lang"]
             if lang == "zh-Hant":
@@ -168,23 +168,29 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 f'line-height:1.6;">'
                 f'{t("emergency_msg")}</div>'
 
-                f'<div style="margin-top:1rem;'
-                f'background:#fafafa;'
-                f'border-radius:10px;'
-                f'padding:0.9rem 1.1rem;">'
+                f'<div style="margin-top:1.3rem;'
+                f'background:linear-gradient(180deg, #ffffff 0%, #fff5f5 100%);'
+                f'border:1px solid #fee2e2;'
+                f'border-radius:14px;'
+                f'padding:1.4rem 1.6rem;'
+                f'text-align:center;'
+                f'box-shadow:0 8px 24px rgba(220,38,38,0.08), '
+                f'0 2px 6px rgba(0,0,0,0.03);">'
 
                 f'<div style="display:flex;align-items:center;'
-                f'gap:0.5rem;margin-bottom:0.4rem;">'
-                f'<span style="font-size:1rem;">📞</span>'
-                f'<span style="font-size:0.95rem;'
-                f'font-weight:700;'
-                f'color:#18181b;">'
+                f'justify-content:center;gap:0.6rem;'
+                f'margin-bottom:0.7rem;">'
+                f'<span style="font-size:1.6rem;">📞</span>'
+                f'<span style="font-size:1.35rem;'
+                f'font-weight:800;'
+                f'color:#b91c1c;'
+                f'letter-spacing:0.2px;">'
                 f'{hotline_main}</span></div>'
 
-                f'<div style="font-size:0.86rem;'
-                f'font-weight:600;'
+                f'<div style="font-size:1.15rem;'
+                f'font-weight:700;'
                 f'color:#b91c1c;'
-                f'letter-spacing:0.4px;'
+                f'letter-spacing:0.6px;'
                 f'font-family:SF Mono,Menlo,monospace;">'
                 f'{hotline_numbers}</div>'
 
@@ -221,7 +227,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 unsafe_allow_html=True,
             )
 
-            # 可能原因
+            # 可能原因（同字号，不同字重）
             possible_causes = r.get("possible_causes", [])
             if possible_causes:
                 likelihood_label = {
@@ -243,17 +249,18 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     lbl = likelihood_label.get(likelihood, likelihood)
                     if condition:
                         cause_rows += (
-                            f'<div style="display:flex;gap:0.8rem;'
-                            f'align-items:flex-start;padding:0.55rem 0.9rem;'
+                            f'<div style="display:flex;gap:0.9rem;'
+                            f'align-items:flex-start;padding:0.6rem 0.9rem;'
                             f'margin-bottom:0.35rem;background:#fafafa;'
                             f'border-radius:8px;">'
-                            f'<div style="flex-shrink:0;min-width:56px;'
-                            f'font-size:0.7rem;font-weight:700;color:{color};'
-                            f'padding-top:0.15rem;">{lbl}</div>'
-                            f'<div style="font-size:0.88rem;color:#18181b;'
-                            f'line-height:1.5;">'
-                            f'<strong>{condition}</strong>'
-                            + (f' <span style="color:#71717a;">— {note}</span>' if note else "") +
+                            f'<div style="flex-shrink:0;min-width:58px;'
+                            f'font-size:0.7rem;font-weight:600;color:{color};'
+                            f'padding-top:0.15rem;letter-spacing:0.2px;">'
+                            f'{lbl}</div>'
+                            f'<div style="font-size:0.86rem;'
+                            f'color:#18181b;line-height:1.55;">'
+                            f'<span style="font-weight:600;">{condition}</span>'
+                            + (f' <span style="color:#71717a;font-weight:400;">— {note}</span>' if note else "") +
                             f'</div></div>'
                         )
                 cause_html = (
@@ -291,7 +298,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     for_syms = ", ".join(rec.get("symptoms", []))
                     display_name = display_drug_name(rec["drug_name"], st.session_state["lang"])
 
-                    # OTC 标签
                     otc_tag = ""
                     if rec.get("is_otc"):
                         otc_tag = (
