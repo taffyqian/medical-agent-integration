@@ -134,33 +134,82 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
             matched_str = " · ".join(r.get("matched", []))
             emergency_html = (
-                f'<div style="background:#ffffff;border:1px solid #fecaca;'
-                f'border-left:3px solid #dc2626;border-radius:12px;'
-                f'padding:1.2rem 1.4rem;margin-top:0.4rem;">'
-                f'<div style="display:inline-block;background:#fee2e2;'
-                f'color:#b91c1c;font-size:0.72rem;font-weight:700;'
-                f'letter-spacing:1.2px;padding:0.3rem 0.7rem;'
-                f'border-radius:6px;text-transform:uppercase;">'
+                # 外层容器：深红渐变背景 + 加粗边框 + 阴影
+                f'<div style="'
+                f'background:linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);'
+                f'border:2px solid #dc2626;'
+                f'border-left:6px solid #991b1b;'
+                f'border-radius:14px;'
+                f'padding:1.4rem 1.6rem;'
+                f'margin-top:0.6rem;'
+                f'box-shadow:0 4px 20px rgba(220,38,38,0.18);">'
+
+                # EMERGENCY 标签（加大、加粗、加深）
+                f'<div style="display:inline-block;'
+                f'background:#dc2626;'
+                f'color:#ffffff;'
+                f'font-size:0.82rem;'
+                f'font-weight:800;'
+                f'letter-spacing:2px;'
+                f'padding:0.4rem 1rem;'
+                f'border-radius:6px;'
+                f'text-transform:uppercase;'
+                f'box-shadow:0 2px 6px rgba(220,38,38,0.3);">'
                 f'{t("emergency")}</div>'
-                f'<div style="margin-top:0.9rem;font-size:1rem;'
-                f'color:#1e293b;line-height:1.55;">'
+
+                # 主提示文字（更大、加粗）
+                f'<div style="margin-top:1rem;'
+                f'font-size:1.15rem;'
+                f'font-weight:600;'
+                f'color:#7f1d1d;'
+                f'line-height:1.55;">'
                 f'{t("emergency_msg")}</div>'
-                f'<div style="margin-top:1rem;background:#fef2f2;'
-                f'border-radius:10px;padding:0.9rem 1.2rem;text-align:center;">'
-                f'<div style="font-size:1rem;font-weight:700;'
-                f'color:#b91c1c;margin-bottom:0.4rem;">'
-                f'📞 {hotline_main}</div>'
-                f'<div style="font-size:0.85rem;color:#7f1d1d;'
-                f'letter-spacing:0.2px;">{hotline_numbers}</div>'
+
+                # 电话模块（白底 + 红字 + 大字号）
+                f'<div style="margin-top:1.2rem;'
+                f'background:#ffffff;'
+                f'border:2px solid #fca5a5;'
+                f'border-radius:12px;'
+                f'padding:1.1rem 1.4rem;'
+                f'text-align:center;'
+                f'box-shadow:0 2px 8px rgba(220,38,38,0.08);">'
+
+                # 主提示：保留电话 icon
+                f'<div style="display:flex;align-items:center;'
+                f'justify-content:center;gap:0.6rem;'
+                f'margin-bottom:0.6rem;">'
+                f'<span style="font-size:1.4rem;">📞</span>'
+                f'<span style="font-size:1.15rem;'
+                f'font-weight:800;'
+                f'color:#b91c1c;'
+                f'letter-spacing:0.3px;">'
+                f'{hotline_main}</span></div>'
+
+                # 号码列表：更大更清晰
+                f'<div style="font-size:0.98rem;'
+                f'font-weight:700;'
+                f'color:#991b1b;'
+                f'letter-spacing:0.4px;'
+                f'font-family:SF Mono,Menlo,monospace;">'
+                f'{hotline_numbers}</div>'
+
                 f'</div>'
-                f'<div style="margin-top:1.1rem;display:grid;'
-                f'grid-template-columns:110px 1fr;gap:0.5rem 1rem;'
-                f'font-size:0.88rem;">'
-                f'<div style="color:#94a3b8;font-weight:600;'
-                f'text-transform:uppercase;font-size:0.72rem;'
-                f'letter-spacing:0.6px;padding-top:0.15rem;">'
+
+                # 匹配症状
+                f'<div style="margin-top:1.2rem;'
+                f'display:grid;'
+                f'grid-template-columns:110px 1fr;'
+                f'gap:0.5rem 1rem;'
+                f'font-size:0.9rem;">'
+                f'<div style="color:#991b1b;'
+                f'font-weight:700;'
+                f'text-transform:uppercase;'
+                f'font-size:0.72rem;'
+                f'letter-spacing:0.6px;'
+                f'padding-top:0.15rem;">'
                 f'{t("matched")}</div>'
-                f'<div style="color:#1e293b;">{matched_str}</div>'
+                f'<div style="color:#7f1d1d;font-weight:600;">'
+                f'{matched_str}</div>'
                 f'</div></div>'
             )
             st.markdown(emergency_html, unsafe_allow_html=True)
@@ -251,7 +300,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     display_name = display_drug_name(rec["drug_name"], st.session_state["lang"])
                     st.markdown(
                         f'<div class="drug-card">'
-                        f'<div class="drug-name">💊 {display_name}</div>'
+                        f'<div class="drug-name">{display_name}</div>'
                         f'<div class="drug-for">{t("for_symptoms")}: {for_syms}</div>'
                         f'<div class="drug-for">{t("brand")}: {brand}</div>'
                         f'</div>',
