@@ -15,6 +15,13 @@ def inject_css():
         .stApp { background-color: #fafafa; }
         [data-testid="stHeader"] { background: transparent; }
 
+        /* ===== 侧边栏：极浅灰，与主面板区分 ===== */
+        [data-testid="stSidebar"] {
+            background-color: #f8f9fa;
+            border-right: 1px solid #e5e7eb;
+        }
+        [data-testid="stSidebar"] .card { padding: 0.85rem 1rem; }
+
         .hero-title {
             font-size: 1.9rem; font-weight: 800; color: #0a0a0a;
             margin-bottom: 0.35rem; letter-spacing: -0.6px;
@@ -24,12 +31,16 @@ def inject_css():
             margin-bottom: 2rem; line-height: 1.55;
         }
 
+        /* ===== 卡片：统一圆角 12px ===== */
         .card {
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             padding: 1.3rem 1.5rem;
             margin-bottom: 1rem;
+        }
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 12px !important;
         }
 
         .badge {
@@ -72,7 +83,7 @@ def inject_css():
             background: #fffbeb !important;
             border: 1px solid #fef3c7 !important;
             border-left: 3px solid #f59e0b !important;
-            border-radius: 10px !important;
+            border-radius: 12px !important;
             padding: 1rem 1.2rem !important;
             font-size: 0.86rem !important;
             color: #451a03 !important;
@@ -88,44 +99,43 @@ def inject_css():
             color: #57534e !important;
         }
 
-        [data-testid="stSidebar"] {
-            background-color: #ffffff; border-right: 1px solid #e5e7eb;
-        }
-        [data-testid="stSidebar"] .card { padding: 0.85rem 1rem; }
-
-        /* 按钮：国际 SaaS 风 */
+        /* ===== 按钮 ===== */
         .stButton > button {
-            border-radius: 8px; font-weight: 600;
+            border-radius: 8px; font-weight: 500;
             transition: all 0.15s ease;
-            border: 1px solid #d4d4d8;
-            color: #18181b;
+            border: 1px solid #e5e7eb;
+            color: #52525b;
             background: #ffffff;
             font-size: 0.86rem;
             padding: 0.5rem 1rem;
         }
         .stButton > button:hover {
-            border-color: #a1a1aa; background: #f4f4f5;
+            border-color: #d4d4d8;
+            background: #fafafa;
+            color: #18181b;
         }
-        /* 主按钮：黑底白字（国际 SaaS 风） */
+        /* 主按钮：医疗蓝（信任感） */
         .stButton > button[kind="primary"] {
-            background: #18181b !important;
+            background: #2563eb !important;
             color: #ffffff !important;
-            border: 1px solid #18181b !important;
-            font-size: 0.86rem !important;
+            border: 1px solid #2563eb !important;
+            font-size: 0.88rem !important;
             font-weight: 600 !important;
-            padding: 0.5rem 1rem !important;
+            padding: 0.55rem 1rem !important;
             border-radius: 8px !important;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2) !important;
         }
         .stButton > button[kind="primary"]:hover {
-            background: #27272a !important;
-            border-color: #27272a !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+            transform: translateY(-1px);
         }
         .stButton > button[kind="primary"]:disabled {
             background: #f4f4f5 !important; color: #a1a1aa !important;
             border-color: #e5e7eb !important;
             box-shadow: none !important;
+            transform: none;
         }
         .stTextInput > div > div > input { border-radius: 8px; }
 
@@ -144,7 +154,7 @@ def inject_css():
             font-family: "SF Mono", Menlo, monospace;
         }
 
-        /* ===== 进度条：横向 chip + 动画 ===== */
+        /* ===== 进度条 ===== */
         .progress-row {
             display: flex; align-items: center; gap: 0.5rem;
             padding: 0.2rem 0; flex-wrap: wrap;
@@ -173,7 +183,6 @@ def inject_css():
             width: 5px; height: 5px; border-radius: 50%;
             background: currentColor; opacity: 0.9;
         }
-
         @keyframes pulse-ring {
             0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); transform: scale(1); }
             70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); transform: scale(1.05); }
@@ -184,13 +193,11 @@ def inject_css():
             background: #4f46e5;
             width: 7px; height: 7px;
         }
-
         @keyframes glow {
             0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.15); }
             50% { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12); }
         }
         .progress-chip.running { animation: glow 2s ease-in-out infinite; }
-
         .progress-chip.done .progress-dot {
             background: #10b981; width: 6px; height: 6px;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
@@ -205,7 +212,6 @@ def inject_css():
         .progress-chip.done + .progress-chip.running::before {
             background: linear-gradient(90deg, #a7f3d0 0%, #c7d2fe 100%);
         }
-
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -216,6 +222,27 @@ def inject_css():
                 rgba(79, 70, 229, 0.4) 50%, transparent 100%);
             background-size: 200% 100%;
             animation: shimmer 2.5s linear infinite;
+        }
+
+        /* ===== 聊天气泡 ===== */
+        [data-testid="stChatMessage"] {
+            border-radius: 12px !important;
+            padding: 0.8rem 1.1rem !important;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 0.6rem !important;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+            background: #ffffff;
+        }
+        [data-testid="stChatMessageAvatarUser"],
+        [data-testid="stChatMessageAvatarAssistant"] {
+            border-radius: 50% !important;
+            overflow: hidden !important;
         }
 
         .empty-state {
@@ -237,7 +264,7 @@ def inject_css():
 
         [data-testid="stExpander"] { margin-bottom: 1rem !important; }
         [data-testid="stExpander"] details {
-            border-radius: 10px !important;
+            border-radius: 12px !important;
             border: 1px solid #e5e7eb !important;
             background: #ffffff !important;
         }
@@ -245,11 +272,11 @@ def inject_css():
             padding: 0.7rem 1rem !important;
             font-weight: 600 !important;
             color: #27272a !important;
-            border-radius: 10px !important;
+            border-radius: 12px !important;
         }
         [data-testid="stExpander"] details[open] > summary {
             border-bottom: 1px solid #f4f4f5 !important;
-            border-radius: 10px 10px 0 0 !important;
+            border-radius: 12px 12px 0 0 !important;
         }
         </style>
         """,

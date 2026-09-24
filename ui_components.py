@@ -284,22 +284,31 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 )
                 st.markdown(cause_html, unsafe_allow_html=True)
 
-            # 推荐药品（深灰标题栏）
+            # 推荐药品 + 医疗建议（合并为一张大卡片）
             recs = r.get("recommendations", [])
             if recs:
-                st.markdown(
-                    f'<div style="padding:0.7rem 1.1rem;margin-top:1.2rem;'
-                    f'margin-bottom:0.3rem;display:flex;align-items:center;gap:0.5rem;'
-                    f'background:#e2e8f0;border-radius:10px 10px 0 0;'
-                    f'border-bottom:1px solid #cbd5e1;">'
-                    f'<span style="font-size:0.9rem;">💊</span>'
-                    f'<span style="font-size:0.76rem;font-weight:700;'
-                    f'color:#334155;letter-spacing:0.8px;text-transform:uppercase;">'
-                    f'{t("drugs")}</span></div>',
-                    unsafe_allow_html=True,
+                # ---- 大卡片开始 ----
+                card_parts = []
+                card_parts.append(
+                    '<div class="card" style="padding:0;margin-top:1.2rem;overflow:hidden;">'
                 )
+                # 顶层标题（推荐药品与医疗建议）
+                card_parts.append(
+                    '<div style="padding:0.8rem 1.2rem;'
+                    'background:#e2e8f0;border-bottom:1px solid #cbd5e1;'
+                    'display:flex;align-items:center;gap:0.5rem;">'
+                    '<span style="font-size:1rem;">💊</span>'
+                    '<span style="font-size:0.78rem;font-weight:700;'
+                    'color:#334155;letter-spacing:0.8px;text-transform:uppercase;">'
+                    + t("drugs") + '</span></div>'
+                )
+                # 药品内容区
+                card_parts.append('<div style="padding:0.9rem 1.1rem;">')
+
                 all_questions = []
-                for rec in recs:
+                advice_html_global = ""   # 收集医疗建议（按第一个药品为准）
+
+                for idx, rec in enumerate(recs):
                     info = rec.get("drug_info", {})
                     brand = info.get("brand_name", "-") if info.get("ok") else "-"
                     for_syms = ", ".join(rec.get("symptoms", []))
@@ -315,65 +324,78 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                             f'{t("otc_label")}</span>'
                         )
 
-                    st.markdown(
-                        f'<div class="drug-card">'
-                        f'<div class="drug-name" style="display:flex;align-items:center;">'
+                    # 药品子卡（浅灰底圆角，放在大卡片内部）
+                    card_parts.append(
+                        f'<div style="background:#fafafa;border-radius:10px;'
+                        f'padding:0.85rem 1rem;margin-bottom:0.6rem;">'
+                        f'<div style="display:flex;align-items:center;'
+                        f'font-size:1rem;font-weight:700;color:#18181b;">'
                         f'<span>{display_name}</span>{otc_tag}</div>'
-                        f'<div class="drug-for"><strong>{t("for_symptoms")}</strong>: {for_syms}</div>'
-                        f'<div class="drug-for"><strong>{t("brand")}</strong>: {brand}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
+                        f'<div style="font-size:0.82rem;color:#52525b;'
+                        f'margin-top:0.3rem;">'
+                        f'<strong style="color:#0d9488;">{t("for_symptoms")}</strong>: {for_syms}'
+                        f'</div>'
+                        f'<div style="font-size:0.82rem;color:#52525b;'
+                        f'margin-top:0.2rem;">'
+                        f'<strong style="color:#0d9488;">{t("brand")}</strong>: {brand}'
+                        f'</div></div>'
                     )
 
-                    advice_rows = []
-                    if rec.get("usage_advice"):
-                        advice_rows.append((t("usage_advice"), rec["usage_advice"]))
-                    if rec.get("self_care"):
-                        advice_rows.append((t("self_care"), rec["self_care"]))
-                    if rec.get("when_to_seek_help"):
-                        advice_rows.append((t("when_to_seek_help"), rec["when_to_seek_help"]))
-                    if advice_rows:
-                        rows_html = ""
-                        for i, (label, text) in enumerate(advice_rows):
-                            is_last = (i == len(advice_rows) - 1)
-                            margin = "" if is_last else "margin-bottom:0.35rem;"
-                            rows_html += (
-                                f'<div style="display:flex;gap:0.9rem;'
-                                f'align-items:flex-start;background:#fafafa;'
-                                f'border-radius:8px;'
-                                f'padding:0.6rem 0.9rem;{margin}">'
-                                f'<div style="flex-shrink:0;min-width:70px;'
-                                f'font-size:0.78rem;font-weight:700;color:#71717a;'
-                                f'letter-spacing:0.2px;line-height:1.5;">{label}</div>'
-                                f'<div style="font-size:0.82rem;color:#18181b;'
-                                f'line-height:1.6;">{text}</div>'
-                                f'</div>'
+                    # 收集医疗建议（只用第一个药品的建议）
+                    if idx == 0:
+                        advice_rows = []
+                        if rec.get("usage_advice"):
+                            advice_rows.append((t("usage_advice"), rec["usage_advice"]))
+                        if rec.get("self_care"):
+                            advice_rows.append((t("self_care"), rec["self_care"]))
+                        if rec.get("when_to_seek_help"):
+                            advice_rows.append((t("when_to_seek_help"), rec["when_to_seek_help"]))
+                        if advice_rows:
+                            advice_html_global += (
+                                '<div style="margin-top:1rem;padding-top:1rem;'
+                                'border-top:1px solid #e5e7eb;">'
+                                '<div style="display:flex;align-items:center;gap:0.5rem;'
+                                'margin-bottom:0.6rem;">'
+                                '<span style="font-size:0.95rem;">💡</span>'
+                                '<span style="font-size:0.76rem;font-weight:700;'
+                                'color:#334155;letter-spacing:0.8px;text-transform:uppercase;">'
+                                + t("medical_guidance") + '</span></div>'
                             )
-                        st.markdown(
-                            '<div style="background:#ffffff;border:1px solid #e5e7eb;'
-                            'border-radius:12px;padding:0;margin-top:0.7rem;overflow:hidden;">'
-                            '<div style="padding:0.7rem 1.1rem;'
-                            'display:flex;align-items:center;gap:0.5rem;'
-                            'background:#e2e8f0;'
-                            'border-bottom:1px solid #cbd5e1;">'
-                            '<span style="font-size:0.9rem;">💡</span>'
-                            '<span style="font-size:0.76rem;font-weight:700;'
-                            'color:#334155;letter-spacing:0.8px;text-transform:uppercase;">'
-                            + t("medical_guidance") + '</span></div>'
-                            '<div style="padding:0.7rem 0.9rem;'
-                            'display:flex;flex-direction:column;gap:0.35rem;">'
-                            + rows_html + '</div></div>',
-                            unsafe_allow_html=True,
-                        )
+                            for label, text in advice_rows:
+                                advice_html_global += (
+                                    f'<div style="display:flex;gap:0.9rem;'
+                                    f'align-items:flex-start;background:#fafafa;'
+                                    f'border-radius:8px;padding:0.6rem 0.9rem;'
+                                    f'margin-bottom:0.35rem;">'
+                                    f'<div style="flex-shrink:0;min-width:70px;'
+                                    f'font-size:0.78rem;font-weight:700;color:#71717a;">'
+                                    f'{label}</div>'
+                                    f'<div style="font-size:0.82rem;color:#18181b;'
+                                    f'line-height:1.6;">{text}</div>'
+                                    f'</div>'
+                                )
+                            advice_html_global += '</div>'
+
+                    # 收集追问
                     for q in rec.get("followup_questions", []):
                         if q and q not in all_questions:
                             all_questions.append(q)
+
+                    # FDA 折叠（每个药品一个）
                     if info.get("ok") and info.get("warnings"):
                         with st.expander(t('view_warnings')):
                             formatted = format_fda_warnings(info["warnings"], st.session_state["lang"])
-                            st.markdown(f'<div class="fda-content">{formatted}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="fda-content">{formatted}</div>',
+                                        unsafe_allow_html=True)
                     elif not info.get("ok"):
                         st.caption(t("no_fda"))
+
+                # 关闭药品内容区
+                card_parts.append(advice_html_global)
+                card_parts.append('</div></div>')  # 药品内容区 + 大卡片
+
+                st.markdown("".join(card_parts), unsafe_allow_html=True)
+
                 if all_questions:
                     r["_followup_questions"] = all_questions
 
