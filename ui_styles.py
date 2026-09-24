@@ -58,36 +58,40 @@ def inject_css():
             margin: 0.7rem 0;
             display: flex; flex-direction: column; gap: 0.35rem;
         }
-        .drug-name {
-            font-size: 1.05rem; font-weight: 700; color: #18181b;
-        }
-        .drug-for {
-            font-size: 0.84rem; color: #52525b;
-        }
+        .drug-name { font-size: 1.05rem; font-weight: 700; color: #18181b; }
+        .drug-for { font-size: 0.84rem; color: #52525b; }
         .drug-for strong { color: #0d9488; font-weight: 600; }
 
         .fda-heading {
-            color: #b91c1c; font-size: 0.88rem; font-weight: 700;
+            color: #92400e !important;
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
             display: inline-block;
         }
         .fda-content {
-            background: #fffbeb; border: 1px solid #fef3c7;
-            border-left: 3px solid #f59e0b;
-            border-radius: 10px; padding: 1rem 1.2rem;
-            font-size: 0.86rem; color: #451a03; line-height: 1.65;
+            background: #fffbeb !important;
+            border: 1px solid #fef3c7 !important;
+            border-left: 3px solid #f59e0b !important;
+            border-radius: 10px !important;
+            padding: 1rem 1.2rem !important;
+            font-size: 0.86rem !important;
+            color: #451a03 !important;
+            line-height: 1.65 !important;
         }
-        .fda-hl {
-            background: #fef3c7; color: #92400e;
-            padding: 0.05rem 0.28rem; border-radius: 3px;
-            font-weight: 600;
+        .fda-content > div:first-child { margin-top: 0 !important; }
+        .fda-content ul {
+            margin: 0.4rem 0 0.6rem 1.1rem !important;
+            padding: 0 !important;
+        }
+        .fda-content li {
+            margin-bottom: 0.3rem !important;
+            color: #57534e !important;
         }
 
         [data-testid="stSidebar"] {
             background-color: #ffffff; border-right: 1px solid #e5e7eb;
         }
-        [data-testid="stSidebar"] .card {
-            padding: 0.85rem 1rem;
-        }
+        [data-testid="stSidebar"] .card { padding: 0.85rem 1rem; }
 
         .stButton > button {
             border-radius: 8px; font-weight: 600;
@@ -100,9 +104,9 @@ def inject_css():
             border-color: #a1a1aa; background: #f4f4f5;
         }
         .stButton > button[kind="primary"] {
-            background: #4f46e5 !important;
-            color: #ffffff !important;
-            border: 1px solid #4f46e5 !important;
+            background: #ffffff !important;
+            color: #4f46e5 !important;
+            border: 1px solid #c7d2fe !important;
             font-size: 0.88rem !important;
             font-weight: 600 !important;
             padding: 0.5rem 1rem !important;
@@ -110,12 +114,13 @@ def inject_css():
             box-shadow: none !important;
         }
         .stButton > button[kind="primary"]:hover {
-            background: #4338ca !important;
-            border-color: #4338ca !important;
+            background: #eef2ff !important;
+            border-color: #4f46e5 !important;
+            color: #4338ca !important;
         }
         .stButton > button[kind="primary"]:disabled {
-            background: #e4e4e7 !important; color: #a1a1aa !important;
-            border-color: #e4e4e7 !important;
+            background: #fafafa !important; color: #a1a1aa !important;
+            border-color: #e5e7eb !important;
         }
         .stTextInput > div > div > input { border-radius: 8px; }
 
@@ -136,20 +141,22 @@ def inject_css():
 
         .progress-row {
             display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.3rem 0; flex-wrap: wrap;
+            padding: 0.2rem 0; flex-wrap: wrap;
         }
         .progress-chip {
             display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.25rem 0.7rem; border-radius: 999px;
+            padding: 0.28rem 0.7rem; border-radius: 999px;
             font-size: 0.76rem; font-weight: 600;
             border: 1px solid #e5e7eb; background: #ffffff;
             color: #71717a;
+            transition: all 0.2s ease;
         }
         .progress-chip.done {
             background: #ecfdf5; border-color: #d1fae5; color: #065f46;
         }
         .progress-chip.running {
             background: #eef2ff; border-color: #c7d2fe; color: #3730a3;
+            font-weight: 700;
         }
         .progress-chip.waiting {
             background: #fafafa; border-color: #e5e7eb; color: #a1a1aa;
@@ -174,6 +181,23 @@ def inject_css():
             text-align: center; color: #a1a1aa;
             font-size: 0.76rem; padding: 2.5rem 0 1.5rem 0;
             letter-spacing: 0.3px;
+        }
+
+        [data-testid="stExpander"] { margin-bottom: 1rem !important; }
+        [data-testid="stExpander"] details {
+            border-radius: 10px !important;
+            border: 1px solid #e5e7eb !important;
+            background: #ffffff !important;
+        }
+        [data-testid="stExpander"] details > summary {
+            padding: 0.7rem 1rem !important;
+            font-weight: 600 !important;
+            color: #27272a !important;
+            border-radius: 10px !important;
+        }
+        [data-testid="stExpander"] details[open] > summary {
+            border-bottom: 1px solid #f4f4f5 !important;
+            border-radius: 10px 10px 0 0 !important;
         }
         </style>
         """,
