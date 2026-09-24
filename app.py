@@ -122,9 +122,9 @@ if len(st.session_state.history) >= 2:
     drugs_str = " · ".join([display_drug_name(d, st.session_state["lang"]) for d in all_drugs]) or "-"
     causes_str = " · ".join(all_causes) or "-"
     severity_display = latest_severity
-    if emergency_symptoms:
+        if emergency_symptoms:
         unique_emerg = list(set(emergency_symptoms))
-        severity_display = f'{latest_severity}（含紧急症状：{" · ".join(unique_emerg)}）'
+        severity_display = f'{latest_severity} ({t("contains_emergency")}: {" · ".join(unique_emerg)})'
 
     sum_html = (
         '<div style="background:#ffffff;border:1px solid #cbd5e1;'
