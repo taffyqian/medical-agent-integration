@@ -93,9 +93,7 @@ def render_progress(t, current_stage, placeholder):
     else:
         idx_current = -1
 
-    html = '<div class="card" style="padding:0.9rem 1.2rem;">'
-    html += f'<div class="label">{t("progress_heading")}</div>'
-    html += '<div class="progress-row">'
+    chips = ""
     for idx_stage, stage in enumerate(stage_order):
         label = stage_labels[stage]
         if idx_stage < idx_current:
@@ -104,12 +102,19 @@ def render_progress(t, current_stage, placeholder):
             cls = "running"
         else:
             cls = "waiting"
-        html += (
+        chips += (
             f'<div class="progress-chip {cls}">'
             f'<span class="progress-dot"></span>'
             f'<span>{label}</span></div>'
         )
-    html += '</div></div>'
+
+    html = (
+        f'<div class="card" style="padding:0.85rem 1.1rem;">'
+        f'<div class="label" style="margin-bottom:0.5rem;">'
+        f'{t("progress_heading")}</div>'
+        f'<div class="progress-row">{chips}</div>'
+        f'</div>'
+    )
     placeholder.markdown(html, unsafe_allow_html=True)
 
 
@@ -121,7 +126,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
         f"{t('turn', n=turn_no)}  ·  {', '.join(turn_input)}",
         expanded=(turn_no == len(st.session_state.get("history", []))),
     ):
-        # ---------- 紧急分支（克制版红卡）----------
+        # ---------- 紧急分支（克制红卡）----------
         if r["action"] == "emergency_escalation":
             lang = st.session_state["lang"]
             if lang == "zh-Hant":
@@ -136,7 +141,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
             matched_str = " · ".join(r.get("normalized") or r.get("matched") or [])
             emergency_html = (
-                # 外层：白底 + 极细灰边框 + 顶部一条红条
                 f'<div style="'
                 f'background:#ffffff;'
                 f'border:1px solid #e5e7eb;'
@@ -145,7 +149,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 f'padding:1.3rem 1.5rem;'
                 f'margin-top:0.6rem;">'
 
-                # EMERGENCY 标签：红字白底细红边
                 f'<div style="display:inline-block;'
                 f'background:#ffffff;'
                 f'color:#b91c1c;'
@@ -158,7 +161,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 f'text-transform:uppercase;">'
                 f'{t("emergency")}</div>'
 
-                # 主提示：红字（保留警示核心）
                 f'<div style="margin-top:0.95rem;'
                 f'font-size:1rem;'
                 f'font-weight:600;'
@@ -166,7 +168,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 f'line-height:1.6;">'
                 f'{t("emergency_msg")}</div>'
 
-                # 电话模块：浅灰底，黑字主标 + 红字电话号
                 f'<div style="margin-top:1rem;'
                 f'background:#fafafa;'
                 f'border-radius:10px;'
@@ -177,8 +178,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 f'<span style="font-size:1rem;">📞</span>'
                 f'<span style="font-size:0.95rem;'
                 f'font-weight:700;'
-                f'color:#18181b;'
-                f'letter-spacing:0.1px;">'
+                f'color:#18181b;">'
                 f'{hotline_main}</span></div>'
 
                 f'<div style="font-size:0.86rem;'
@@ -190,7 +190,6 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
                 f'</div>'
 
-                # 匹配症状：中性灰标签 + 黑字值
                 f'<div style="margin-top:1rem;'
                 f'display:grid;'
                 f'grid-template-columns:110px 1fr;'
@@ -291,40 +290,55 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     brand = info.get("brand_name", "-") if info.get("ok") else "-"
                     for_syms = ", ".join(rec.get("symptoms", []))
                     display_name = display_drug_name(rec["drug_name"], st.session_state["lang"])
+
+                    # OTC 标签
+                    otc_tag = ""
+                    if rec.get("is_otc"):
+                        otc_tag = (
+                            f'<span style="font-size:0.68rem;font-weight:700;'
+                            f'color:#0d9488;border:1px solid #d1fae5;'
+                            f'padding:0.08rem 0.4rem;border-radius:4px;'
+                            f'letter-spacing:0.5px;margin-left:0.5rem;">'
+                            f'{t("otc_label")}</span>'
+                        )
+
                     st.markdown(
                         f'<div class="drug-card">'
-                        f'<div class="drug-name">{display_name}</div>'
+                        f'<div class="drug-name" style="display:flex;align-items:center;">'
+                        f'<span>{display_name}</span>{otc_tag}</div>'
                         f'<div class="drug-for"><strong>{t("for_symptoms")}</strong>: {for_syms}</div>'
                         f'<div class="drug-for"><strong>{t("brand")}</strong>: {brand}</div>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
+
                     advice_rows = []
                     if rec.get("usage_advice"):
-                        advice_rows.append((t("usage_advice"), rec["usage_advice"], "#0d9488", "#f0fdfa"))
+                        advice_rows.append((t("usage_advice"), rec["usage_advice"]))
                     if rec.get("self_care"):
-                        advice_rows.append((t("self_care"), rec["self_care"], "#0d9488", "#f0fdfa"))
+                        advice_rows.append((t("self_care"), rec["self_care"]))
                     if rec.get("when_to_seek_help"):
-                        advice_rows.append((t("when_to_seek_help"), rec["when_to_seek_help"], "#b91c1c", "#fef2f2"))
+                        advice_rows.append((t("when_to_seek_help"), rec["when_to_seek_help"]))
                     if advice_rows:
                         rows_html = ""
-                        for i, (label, text, color, bg) in enumerate(advice_rows):
+                        for i, (label, text) in enumerate(advice_rows):
                             is_last = (i == len(advice_rows) - 1)
-                            margin = "" if is_last else "margin-bottom:0.4rem;"
+                            margin = "" if is_last else "margin-bottom:0.35rem;"
                             rows_html += (
-                                f'<div style="display:flex;gap:0.8rem;'
-                                f'align-items:flex-start;background:{bg};'
+                                f'<div style="display:flex;gap:0.9rem;'
+                                f'align-items:flex-start;background:#fafafa;'
                                 f'border-radius:8px;'
-                                f'padding:0.6rem 0.9rem;{margin}">'
+                                f'padding:0.65rem 0.9rem;{margin}">'
                                 f'<div style="flex-shrink:0;min-width:70px;'
-                                f'font-size:0.8rem;font-weight:700;color:{color};'
+                                f'font-size:0.78rem;font-weight:700;color:#71717a;'
                                 f'letter-spacing:0.2px;line-height:1.5;">{label}</div>'
-                                f'<div style="font-size:0.88rem;color:#18181b;'
-                                f'line-height:1.55;">{text}</div>'
+                                f'<div style="font-size:0.86rem;color:#18181b;'
+                                f'line-height:1.6;">{text}</div>'
                                 f'</div>'
                             )
                         st.markdown(
-                            '<div class="card" style="padding:0;margin-top:0.7rem;overflow:hidden;">'
+                            '<div style="background:#ffffff;border:1px solid #e5e7eb;'
+                            'border-radius:12px;padding:0;margin-top:0.7rem;overflow:hidden;">'
                             '<div style="padding:0.75rem 1.1rem;'
                             'display:flex;align-items:center;gap:0.5rem;'
                             'border-bottom:1px solid #f4f4f5;">'
@@ -332,7 +346,9 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                             '<span style="font-size:0.76rem;font-weight:800;'
                             'color:#52525b;letter-spacing:0.8px;text-transform:uppercase;">'
                             + t("medical_guidance") + '</span></div>'
-                            '<div style="padding:0.8rem 0.9rem;">' + rows_html + '</div></div>',
+                            '<div style="padding:0.7rem 0.9rem;'
+                            'display:flex;flex-direction:column;gap:0.35rem;">'
+                            + rows_html + '</div></div>',
                             unsafe_allow_html=True,
                         )
                     for q in rec.get("followup_questions", []):
@@ -382,7 +398,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
 
 # ============================================================
-# 预约 UI（状态机）
+# 预约 UI（状态机，全部中性色）
 # ============================================================
 def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
     state_key = f"appt_state_{turn_no}"
@@ -395,10 +411,12 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
 
     current = st.session_state[state_key]
 
+    # 状态 1: 询问
     if current == "asking":
         st.markdown(
-            f'<div style="margin-top:1.2rem;padding:0.9rem 1.2rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;">'
+            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
+            f'background:#fafafa;border:1px solid #e5e7eb;'
+            f'border-radius:10px;">'
             f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
             f'{t("ask_appointment")}</div></div>',
             unsafe_allow_html=True,
@@ -415,10 +433,12 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
                 st.session_state[state_key] = "declined"
                 st.rerun()
 
+    # 状态 2: 选日期
     elif current == "choosing_date":
         st.markdown(
-            f'<div style="margin-top:1.2rem;padding:0.9rem 1.2rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;">'
+            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
+            f'background:#fafafa;border:1px solid #e5e7eb;'
+            f'border-radius:10px;">'
             f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
             f'📅 {t("choose_date")}</div></div>',
             unsafe_allow_html=True,
@@ -448,10 +468,12 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
             st.session_state[state_key] = "declined"
             st.rerun()
 
+    # 状态 3: 选时段
     elif current == "choosing_time":
         st.markdown(
-            f'<div style="margin-top:1.2rem;padding:0.9rem 1.2rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;">'
+            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
+            f'background:#fafafa;border:1px solid #e5e7eb;'
+            f'border-radius:10px;">'
             f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
             f'⏰ {t("choose_time")}</div></div>',
             unsafe_allow_html=True,
@@ -469,6 +491,7 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
             st.session_state[state_key] = "declined"
             st.rerun()
 
+    # 状态 4: 确认中
     elif current == "confirming":
         selected_date = st.session_state.get(date_key, "")
         selected_time = st.session_state.get(time_key, "")
@@ -490,34 +513,38 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
             st.session_state[state_key] = "failed"
         st.rerun()
 
+    # 状态 5: 成功
     elif current == "confirmed":
         confirmed = st.session_state.get(result_key, {})
         local_time = format_local_time(
             confirmed.get("slot_utc", ""), st.session_state["lang"]
         )
         st.markdown(
-            f'<div style="margin-top:1.2rem;padding:1rem 1.3rem;'
-            f'background:#ecfdf5;border:1px solid #d1fae5;'
-            f'border-radius:12px;">'
-            f'<div style="font-size:0.95rem;font-weight:700;'
-            f'color:#065f46;margin-bottom:0.45rem;">'
+            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
+            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'border-left:3px solid #10b981;'
+            f'border-radius:10px;">'
+            f'<div style="font-size:0.9rem;font-weight:700;'
+            f'color:#065f46;margin-bottom:0.3rem;">'
             f'{t("appointment_confirmed")}</div>'
-            f'<div style="font-size:0.88rem;color:#065f46;'
+            f'<div style="font-size:0.85rem;color:#52525b;'
             f'font-family:SF Mono,Menlo,monospace;">'
             f'{t("appointment_scheduled_at")}: {local_time}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
+    # 状态 6: 用户拒绝
     elif current == "declined":
         st.markdown(
-            f'<div style="margin-top:1.2rem;padding:0.8rem 1.2rem;'
+            f'<div style="margin-top:1rem;padding:0.75rem 1.1rem;'
             f'background:#fafafa;border:1px solid #e5e7eb;'
             f'border-radius:10px;font-size:0.86rem;color:#71717a;">'
             f'{t("appointment_declined")}</div>',
             unsafe_allow_html=True,
         )
 
+    # 状态 7: 失败
     elif current == "failed":
         st.error(t("appointment_failed"))
         if st.button(t("retry"), key=f"appt_retry_{turn_no}"):
