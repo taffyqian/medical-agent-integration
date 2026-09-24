@@ -194,9 +194,13 @@ def orchestrate(
     # 用 AI 返回的标准化症状更新 symptoms_history
     ai_normalized = []
     for rec in analysis.get("recommendations", []):
-        sym = rec.get("symptom")
-        if sym and sym not in ai_normalized:
-            ai_normalized.append(sym)
+        # 云端返回 "symptoms"（复数，list）；兼容 "symptom"（单数，str）
+        syms = rec.get("symptoms") or rec.get("symptom")
+        if isinstance(syms, str):
+            syms = [syms]
+        for sym in (syms or []):
+            if sym and sym not in ai_normalized:
+                ai_normalized.append(sym)
 
     normalized_for_history = ai_normalized if ai_normalized else symptoms
     for s in normalized_for_history:
