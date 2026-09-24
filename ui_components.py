@@ -387,10 +387,20 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
         dates = r.get("available_dates", [])
         cols = st.columns(4)
         for i, d in enumerate(dates):
-            # 显示为本地时间
-            local_label = format_local_time(d + "T00:00:00Z", st.session_state["lang"])
-            # 只取日期部分
-            local_label = local_label.split(" ")[0] if " " in local_label else local_label
+            # 直接用日期字符串格式化为本地显示
+            from datetime import datetime, timezone, timedelta
+            dt = datetime.fromisoformat(d + "T00:00:00+00:00")
+            # 转为 UTC+8
+            local = dt.astimezone(timezone(timedelta(hours=8)))
+            lang = st.session_state["lang"]
+            if lang == "en":
+                local_label = local.strftime("%b %d, %Y")     # Sep 25, 2026
+            elif lang == "zh-Hant":
+                weekday = ["一", "二", "三", "四", "五", "六", "日"][local.weekday()]
+                local_label = local.strftime(f"%m月%d日 週{weekday}")   # 09月25日 週三
+            else:
+                weekday = ["一", "二", "三", "四", "五", "六", "日"][local.weekday()]
+                local_label = local.strftime(f"%m月%d日 星期{weekday}") # 09月25日 星期三
             with cols[i % 4]:
                 if st.button(local_label, key=f"appt_date_{turn_no}_{i}",
                              use_container_width=True):
