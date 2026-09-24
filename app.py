@@ -130,41 +130,34 @@ if len(st.session_state.history) >= 2:
         unique_emerg = list(set(emergency_symptoms))
         severity_display = f'{latest_severity} ({t("contains_emergency")}: {" · ".join(unique_emerg)})'
 
-    sum_html = (
+        sum_html = (
         '<div style="background:#ffffff;border:1px solid #cbd5e1;'
-        'border-radius:12px;padding:1rem 1.3rem;margin-top:2rem;'
-        'margin-bottom:1rem;font-size:0.88rem;color:#334155;">'
+        'border-radius:12px;padding:1.2rem 1.5rem;margin-top:2rem;'
+        'margin-bottom:1rem;font-size:0.9rem;color:#334155;">'
         f'<div style="display:flex;align-items:center;gap:0.5rem;'
-        f'margin-bottom:0.7rem;font-weight:700;color:#0f172a;font-size:0.95rem;">'
+        f'margin-bottom:1rem;font-weight:800;color:#0f172a;font-size:1rem;">'
         f'<span>📋</span><span>{t("conversation_summary")}</span></div>'
-        f'<div style="margin-bottom:0.35rem;">'
-        f'<span style="color:#94a3b8;font-weight:600;'
-        f'min-width:80px;display:inline-block;">'
-        f'{t("summary_symptoms")}</span>'
-        + " · ".join(all_symptoms) + f'</div>'
-        f'<div style="margin-bottom:0.35rem;">'
-        f'<span style="color:#94a3b8;font-weight:600;'
-        f'min-width:80px;display:inline-block;">'
-        f'{t("summary_severity")}</span>'
-        f'<span style="color:{sev_color};font-weight:600;">'
-        f'{severity_display}</span></div>'
-        f'<div style="margin-bottom:0.35rem;">'
-        f'<span style="color:#94a3b8;font-weight:600;'
-        f'min-width:80px;display:inline-block;">'
-        f'{t("summary_causes")}</span>{causes_str}</div>'
-        f'<div style="margin-bottom:0.35rem;">'
-        f'<span style="color:#94a3b8;font-weight:600;'
-        f'min-width:80px;display:inline-block;">'
-        f'{t("summary_drugs")}</span>{drugs_str}</div>'
+        '<div style="display:grid;grid-template-columns:170px 1fr;'
+        'gap:0.55rem 1rem;">'
+
+        f'<div style="color:#64748b;font-weight:600;">{t("summary_symptoms")}</div>'
+        f'<div>' + " · ".join(all_symptoms) + '</div>'
+
+        f'<div style="color:#64748b;font-weight:600;">{t("summary_severity")}</div>'
+        f'<div style="color:{sev_color};font-weight:600;">{severity_display}</div>'
+
+        f'<div style="color:#64748b;font-weight:600;">{t("summary_causes")}</div>'
+        f'<div>{causes_str}</div>'
+
+        f'<div style="color:#64748b;font-weight:600;">{t("summary_drugs")}</div>'
+        f'<div>{drugs_str}</div>'
     )
     if appt_time:
         sum_html += (
-            f'<div style="margin-bottom:0;">'
-            f'<span style="color:#94a3b8;font-weight:600;'
-            f'min-width:80px;display:inline-block;">'
-            f'{t("summary_appointment")}</span>{appt_time}</div>'
+            f'<div style="color:#64748b;font-weight:600;">{t("summary_appointment")}</div>'
+            f'<div>{appt_time}</div>'
         )
-    sum_html += '</div>'
+    sum_html += '</div></div>'
     st.markdown(sum_html, unsafe_allow_html=True)
 
 # 追问提示（底部聊天框上方）
