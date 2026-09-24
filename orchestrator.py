@@ -129,8 +129,8 @@ def generate_time_slots() -> List[str]:
 
 def combine_date_time(date_str: str, time_str: str) -> str:
     """把 'YYYY-MM-DD' + 'HH:MM' 合并成 ISO UTC 字符串。"""
-    dt = datetime.fromisoformat(f"{date_str}T{time_str}:00+00:00")
-    return dt.isoformat().replace("+00:00", "Z")
+    dt = datetime.fromisoformat(f"{date_str}T{time_str}:00+08:00")
+    return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 # =====================================================================
