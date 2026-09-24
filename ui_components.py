@@ -383,10 +383,49 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
                     # FDA 折叠（每个药品一个）
                     if info.get("ok") and info.get("warnings"):
-                        with st.expander(t('view_warnings')):
-                            formatted = format_fda_warnings(info["warnings"], st.session_state["lang"])
-                            st.markdown(f'<div class="fda-content">{formatted}</div>',
-                                        unsafe_allow_html=True)
+                        formatted = format_fda_warnings(info["warnings"], st.session_state["lang"])
+                        st.markdown(
+                            f'<details style="margin-top:0.8rem;'
+                            f'background:#FFF3CD;'
+                            f'border:1px solid #ffe69c;'
+                            f'border-left:4px solid #D97706;'
+                            f'border-radius:10px;'
+                            f'overflow:hidden;">'
+                            f'<summary style="'
+                            f'padding:0.75rem 1.1rem;'
+                            f'cursor:pointer;'
+                            f'font-weight:700;'
+                            f'font-size:0.88rem;'
+                            f'color:#92400E;'
+                            f'background:#FFF3CD;'
+                            f'display:flex;'
+                            f'align-items:center;'
+                            f'gap:0.5rem;'
+                            f'list-style:none;">'
+                            f'<span style="font-size:1rem;">⚠️</span>'
+                            f'<span>{t("view_warnings")}</span>'
+                            f'<span style="'
+                            f'background:#D97706;'
+                            f'color:#ffffff;'
+                            f'font-size:0.62rem;'
+                            f'font-weight:800;'
+                            f'letter-spacing:1px;'
+                            f'padding:0.12rem 0.45rem;'
+                            f'border-radius:4px;'
+                            f'text-transform:uppercase;">FDA</span>'
+                            f'</summary>'
+                            f'<div style="'
+                            f'padding:1rem 1.2rem;'
+                            f'background:#ffffff;'
+                            f'border-top:1px solid #ffe69c;'
+                            f'font-size:0.86rem;'
+                            f'color:#451a03;'
+                            f'line-height:1.65;">'
+                            f'{formatted}'
+                            f'</div>'
+                            f'</details>',
+                            unsafe_allow_html=True,
+                        )
                     elif not info.get("ok"):
                         st.caption(t("no_fda"))
 
