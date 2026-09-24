@@ -130,7 +130,8 @@ if len(st.session_state.history) >= 2:
         unique_emerg = list(set(emergency_symptoms))
         severity_display = f'{latest_severity} ({t("contains_emergency")}: {" · ".join(unique_emerg)})'
 
-        sum_html = (
+    # ---- 对话总结卡片（grid 布局，标签/值严格分列）----
+    sum_html = (
         '<div style="background:#ffffff;border:1px solid #cbd5e1;'
         'border-radius:12px;padding:1.2rem 1.5rem;margin-top:2rem;'
         'margin-bottom:1rem;font-size:0.9rem;color:#334155;">'
