@@ -5,7 +5,7 @@ import json
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -21,7 +21,7 @@ STORAGE_ACCOUNT_URL = os.environ["STORAGE_ACCOUNT_URL"]
 SESSION_CONTAINER = os.environ.get("SESSION_CONTAINER", "sessions")
 
 # =====================================================================
-# 固定 i18n 文案（简体 / 繁体 / 英文）
+# 固定 i18n 文案
 # =====================================================================
 DISCLAIMER_ZH_HANS = "以上为常见可能性参考，不构成诊断。如症状持续或加重，请咨询医生。"
 DISCLAIMER_ZH_HANT = "以上為常見可能性參考，不構成診斷。如症狀持續或加重，請諮詢醫生。"
@@ -35,7 +35,6 @@ EMERGENCY_MSG_EN = ("These symptoms may indicate a medical emergency. "
 
 
 def _pick(lang: str, zh_hans: str, zh_hant: str, en: str) -> str:
-    """按 lang 选文案。"""
     if lang == "zh-Hant":
         return zh_hant
     if lang == "en":
@@ -115,7 +114,44 @@ def schedule_appointment(patient_name: str, reason: str,
 
 
 # =====================================================================
-# 会话状态（Blob Storage）
+# 时段生成
+# =====================================================================
+def generate_available_dates(days: int = 7) -> List[str]:
+    """返回未来 7 天的日期字符串（YYYY-MM-DD）。"""
+    today = datetime.now(timezone.utc).date()
+    return [(today + timedelta(days=i)).isoformat() for i in range(1, days + 1)]
+
+
+def generate_time_slots() -> List[str]:
+    """返回标准时段列表（HH:MM）。"""
+    return ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
+
+
+def combine_date_time(date_str: str, time_str: str) -> str:
+    """把 'YYYY-MM-DD' + 'HH:MM' 合并成 ISO UTC 字符串。"""
+    dt = datetime.fromisoformat(f"{date_str}T{time_str}:00+00:00")
+    return dt.isoformat().replace("+00:00", "Z")
+
+
+# =====================================================================
+# 用户确认后的预约
+# =====================================================================
+def confirm_appointment(session_id: str, reason: str,
+                        date_str: str, time_str: str,
+                        lang: str = "zh-Hans") -> Dict:
+    """用户选定日期 + 时间后，调云端 schedule_appointment。"""
+    when_iso = combine_date_time(date_str, time_str)
+    result = schedule_appointment(
+        patient_name="Patient",
+        reason=reason,
+        when=when_iso,
+        lang=lang,
+    )
+    return result
+
+
+# =====================================================================
+# 会话状态
 # =====================================================================
 
 def _now_iso() -> str:
@@ -179,7 +215,7 @@ def orchestrate(
     fixed_disclaimer = _fixed_disclaimer(lang)
     fixed_emergency_msg = _fixed_emergency_msg(lang)
 
-    # --- Step 0: 记录原始输入 ---
+    # Step 0
     state["events"].append({
         "stage": "input_received",
         "at": _now_iso(),
@@ -187,7 +223,7 @@ def orchestrate(
         "lang": lang,
     })
 
-    # --- Step 1: 紧急检测 ---
+    # Step 1: 紧急检测
     if progress_callback:
         progress_callback("emergency_check")
     emerg = emergency_escalator(symptoms)
@@ -223,7 +259,7 @@ def orchestrate(
             "state": state,
         }
 
-    # --- Step 2: 症状分析 ---
+    # Step 2: 症状分析
     if progress_callback:
         progress_callback("symptom_analysis")
     analysis = analyze_symptoms(symptoms, lang=lang)
@@ -253,7 +289,7 @@ def orchestrate(
         "normalized_symptoms": ai_normalized,
     })
 
-    # --- Step 3: 药品查询 ---
+    # Step 3: 药品查询
     if progress_callback:
         progress_callback("drug_lookup")
     recommendations = analysis.get("recommendations", [])
@@ -283,23 +319,24 @@ def orchestrate(
         })
     state["recommendations"] = enriched
 
-    # --- Step 4: 预约 ---
+    # Step 4: 生成候选日期 + 时段（不自动预约）
     if progress_callback:
         progress_callback("appointment")
-    reason = ", ".join(normalized_for_history)
-    appointment = schedule_appointment(
-        patient_name=state.get("patient_name") or "Unknown",
-        reason=reason,
-        lang=lang,
-    )
-    state["appointment"] = appointment
+    available_dates = generate_available_dates(7)
+    time_slots = generate_time_slots()
+    appointment_reason = ", ".join(normalized_for_history)
+
     state["events"].append({
         "stage": "appointment",
         "at": _now_iso(),
-        "result": appointment,
+        "result": {
+            "pending": True,
+            "available_dates": available_dates,
+            "time_slots": time_slots,
+        },
     })
 
-    # --- Step 5: 写回 ---
+    # Step 5: 写回
     if progress_callback:
         progress_callback("completed")
     state["workflow_stage"] = "completed"
@@ -311,7 +348,11 @@ def orchestrate(
         "severity": state["severity"],
         "possible_causes": possible_causes,
         "recommendations": enriched,
-        "appointment": appointment,
+        "appointment": None,
+        "pending_appointment": True,
+        "available_dates": available_dates,
+        "time_slots": time_slots,
+        "appointment_reason": appointment_reason,
         "disclaimer": fixed_disclaimer,
         "state": state,
     }

@@ -1,7 +1,7 @@
 import uuid
 import streamlit as st
 
-from orchestrator import orchestrate
+from orchestrator import orchestrate, confirm_appointment
 from ui_texts import make_translator, display_drug_name
 from ui_styles import inject_css
 from ui_helpers import format_local_time
@@ -33,14 +33,10 @@ if "greeted_name" not in st.session_state:
 
 t = make_translator(st)
 
-# ============================================================
 # 侧边栏
-# ============================================================
 render_sidebar(t)
 
-# ============================================================
 # 主标题
-# ============================================================
 st.markdown(
     f'<div class="hero-title">🏥 {t("title")}</div>',
     unsafe_allow_html=True,
@@ -50,9 +46,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ============================================================
 # 空状态
-# ============================================================
 if not st.session_state.history:
     st.markdown(
         f'<div class="empty-state">'
@@ -62,48 +56,48 @@ if not st.session_state.history:
         unsafe_allow_html=True,
     )
 
-# ============================================================
+
+# 预约回调
+def _confirm_appointment_cb(session_id, reason, date_str, time_str, lang):
+    return confirm_appointment(
+        session_id=session_id,
+        reason=reason,
+        date_str=date_str,
+        time_str=time_str,
+        lang=lang,
+    )
+
+
 # 显示历史对话
-# ============================================================
 for i, turn in enumerate(st.session_state.history):
     with st.chat_message("user"):
         st.markdown(f"{', '.join(turn['input'])}")
     with st.chat_message("assistant"):
-        render_result_turn(t, turn["result"], turn["input"], i + 1)
+        render_result_turn(
+            t, turn["result"], turn["input"], i + 1,
+            on_confirm_appointment=_confirm_appointment_cb,
+        )
 
-# ============================================================
-# 对话总结（多轮之后；最后一轮是紧急时仍显示，但会标红）
-# ============================================================
+# 对话总结（多轮之后）
 if len(st.session_state.history) >= 2:
-    # 用标准化症状（从最新 state 读）
     all_symptoms = (
         st.session_state.history[-1]["result"]
         .get("state", {})
         .get("symptoms_history", [])
     )
-
-    # 汇总所有推荐药品（去重）
     all_drugs = []
     for turn in st.session_state.history:
         for rec in turn["result"].get("recommendations", []):
             dn = rec.get("drug_name", "")
             if dn and dn not in all_drugs:
                 all_drugs.append(dn)
-
-    # 汇总可能原因（严格去重：忽略大小写 + 首尾空格）
     all_causes = []
-    seen_causes = set()
     for turn in st.session_state.history:
         for c in turn["result"].get("possible_causes", []):
-            cond = c.get("condition", "").strip()
-            key = cond.lower()
-            if cond and key not in seen_causes:
+            cond = c.get("condition", "")
+            if cond and cond not in all_causes:
                 all_causes.append(cond)
-                seen_causes.add(key)
-    # 限制最多 5 个，避免总结卡片过长
-    all_causes = all_causes[:5]
 
-    # 计算"最高严重程度" + 紧急症状列表
     all_severities = []
     emergency_symptoms = []
     for turn in st.session_state.history:
@@ -115,150 +109,96 @@ if len(st.session_state.history) >= 2:
                 emergency_symptoms.extend(matched)
         else:
             all_severities.append(r.get("severity", "mild"))
-
     severity_rank = {"emergency": 2, "moderate": 1, "mild": 0, "non-emergency": 0}
-    if all_severities:
-        latest_severity = max(all_severities, key=lambda s: severity_rank.get(s, 0))
-    else:
-        latest_severity = "-"
+    latest_severity = max(all_severities, key=lambda s: severity_rank.get(s, 0)) if all_severities else "-"
 
-    # 最新预约
     latest = st.session_state.history[-1]["result"]
-    latest_appt = latest.get("appointment", {})
+    latest_appt = latest.get("appointment", {}) or {}
     appt_time = ""
     if latest_appt.get("scheduled"):
-        appt_time = format_local_time(
-            latest_appt.get("slot_utc", ""), st.session_state["lang"]
-        )
+        appt_time = format_local_time(latest_appt.get("slot_utc", ""), st.session_state["lang"])
 
-    # 拼 HTML
     sev_color = "#b91c1c" if latest_severity == "emergency" else "#15803d"
-    drugs_str = " · ".join([
-        display_drug_name(d, st.session_state["lang"]) for d in all_drugs
-    ]) or "-"
+    drugs_str = " · ".join([display_drug_name(d, st.session_state["lang"]) for d in all_drugs]) or "-"
     causes_str = " · ".join(all_causes) or "-"
-
-    # 严重程度显示文本（含紧急症状说明）
     severity_display = latest_severity
     if emergency_symptoms:
         unique_emerg = list(set(emergency_symptoms))
-        severity_display = f'{latest_severity} ({t("includes_emergency")}: {" · ".join(unique_emerg)})'
+        severity_display = f'{latest_severity}（含紧急症状：{" · ".join(unique_emerg)}）'
 
     sum_html = (
         '<div style="background:#ffffff;border:1px solid #cbd5e1;'
         'border-radius:12px;padding:1rem 1.3rem;margin-top:2rem;'
         'margin-bottom:1rem;font-size:0.88rem;color:#334155;">'
-        # 标题
         f'<div style="display:flex;align-items:center;gap:0.5rem;'
-        f'margin-bottom:0.7rem;font-weight:700;color:#0f172a;'
-        f'font-size:0.95rem;">'
-        f'<span>📋</span><span>{t("conversation_summary")}</span>'
-        f'</div>'
-        # 症状
+        f'margin-bottom:0.7rem;font-weight:700;color:#0f172a;font-size:0.95rem;">'
+        f'<span>📋</span><span>{t("conversation_summary")}</span></div>'
         f'<div style="margin-bottom:0.35rem;">'
         f'<span style="color:#94a3b8;font-weight:600;'
         f'min-width:80px;display:inline-block;">'
         f'{t("summary_symptoms")}</span>'
-        + " · ".join(all_symptoms) +
-        f'</div>'
-        # 严重程度（最高档 + 紧急症状）
+        + " · ".join(all_symptoms) + f'</div>'
         f'<div style="margin-bottom:0.35rem;">'
         f'<span style="color:#94a3b8;font-weight:600;'
         f'min-width:80px;display:inline-block;">'
         f'{t("summary_severity")}</span>'
         f'<span style="color:{sev_color};font-weight:600;">'
-        f'{severity_display}'
-        f'</span>'
-        f'</div>'
-        # 可能原因
+        f'{severity_display}</span></div>'
         f'<div style="margin-bottom:0.35rem;">'
         f'<span style="color:#94a3b8;font-weight:600;'
         f'min-width:80px;display:inline-block;">'
-        f'{t("summary_causes")}</span>'
-        f'{causes_str}'
-        f'</div>'
-        # 药品
+        f'{t("summary_causes")}</span>{causes_str}</div>'
         f'<div style="margin-bottom:0.35rem;">'
         f'<span style="color:#94a3b8;font-weight:600;'
         f'min-width:80px;display:inline-block;">'
-        f'{t("summary_drugs")}</span>'
-        f'{drugs_str}'
-        f'</div>'
+        f'{t("summary_drugs")}</span>{drugs_str}</div>'
     )
-    # 预约
     if appt_time:
         sum_html += (
             f'<div style="margin-bottom:0;">'
             f'<span style="color:#94a3b8;font-weight:600;'
             f'min-width:80px;display:inline-block;">'
-            f'{t("summary_appointment")}</span>'
-            f'{appt_time}'
-            f'</div>'
+            f'{t("summary_appointment")}</span>{appt_time}</div>'
         )
     sum_html += '</div>'
     st.markdown(sum_html, unsafe_allow_html=True)
 
-# ============================================================
 # 追问提示（底部聊天框上方）
-# ============================================================
 if st.session_state.history:
     last_result = st.session_state.history[-1]["result"]
     last_fqs = last_result.get("_followup_questions", [])
-
     if last_fqs:
-        # 分隔线
         st.markdown(
-            '<div style="'
-            'margin-top: 2rem;'
-            'margin-bottom: 1rem;'
-            'border-top: 1px solid #e2e8f0;'
-            '"></div>',
+            '<div style="margin-top:2rem;margin-bottom:1rem;'
+            'border-top:1px solid #e2e8f0;"></div>',
             unsafe_allow_html=True,
         )
-
-        # 小标签
         st.markdown(
-            f'<div style="'
-            f'font-size:0.75rem;'
-            f'color:#94a3b8;'
-            f'font-weight:500;'
-            f'letter-spacing:0.4px;'
-            f'margin-bottom:0.4rem;'
-            f'">{t("followup_prompt")}</div>',
+            f'<div style="font-size:0.75rem;color:#94a3b8;'
+            f'font-weight:500;letter-spacing:0.4px;margin-bottom:0.4rem;">'
+            f'{t("followup_prompt")}</div>',
             unsafe_allow_html=True,
         )
-
-        # 纯列表
         list_html = '<ul style="list-style:none;padding:0;margin:0 0 1rem 0;">'
         for q in last_fqs:
             list_html += (
-                f'<li style="'
-                f'font-size:0.9rem;'
-                f'color:#475569;'
-                f'line-height:1.7;'
-                f'padding:0.1rem 0;'
-                f'">'
-                f'· {q}'
-                f'</li>'
+                f'<li style="font-size:0.9rem;color:#475569;'
+                f'line-height:1.7;padding:0.1rem 0;">· {q}</li>'
             )
         list_html += '</ul>'
         st.markdown(list_html, unsafe_allow_html=True)
 
-# ============================================================
 # 底部聊天输入框
-# ============================================================
 user_input = st.chat_input(t("input_placeholder"))
 
 if user_input and user_input.strip():
     raw = user_input.replace("，", ",")
     symptoms = [s.strip() for s in raw.split(",") if s.strip()]
-
     if not symptoms:
         st.warning(t("no_history"))
     else:
         with st.chat_message("user"):
             st.markdown(f"{user_input}")
-
         with st.chat_message("assistant"):
             progress_placeholder = st.empty()
             render_progress(t, None, progress_placeholder)
@@ -284,11 +224,7 @@ if user_input and user_input.strip():
                         expanded=False,
                     )
                 except Exception as e:
-                    status.update(
-                        label="❌ Error",
-                        state="error",
-                        expanded=True,
-                    )
+                    status.update(label="❌ Error", state="error", expanded=True)
                     st.error(f"Error: {e}")
                     result = None
 
@@ -301,12 +237,13 @@ if user_input and user_input.strip():
                     "result": result,
                 })
                 turn_no = len(st.session_state.history)
-                render_result_turn(t, result, symptoms, turn_no)
+                render_result_turn(
+                    t, result, symptoms, turn_no,
+                    on_confirm_appointment=_confirm_appointment_cb,
+                )
                 st.rerun()
 
-# ============================================================
 # Footer + 免责声明
-# ============================================================
 if st.session_state.history:
     last_result = st.session_state.history[-1]["result"]
     lang = st.session_state["lang"]
@@ -318,6 +255,7 @@ if st.session_state.history:
         )
     else:
         disclaimer_text = str(disclaimer_data) if disclaimer_data else ""
+
     if disclaimer_text:
         st.markdown(
             f'<div style="margin-top:2rem;padding:1rem 1.2rem;'
@@ -325,8 +263,7 @@ if st.session_state.history:
             f'border-left:4px solid #f59e0b;'
             f'color:#92400e;font-size:0.88rem;line-height:1.6;">'
             f'<strong>⚠️ {t("disclaimer")}</strong><br>'
-            f'{disclaimer_text}'
-            f'</div>',
+            f'{disclaimer_text}</div>',
             unsafe_allow_html=True,
         )
 
