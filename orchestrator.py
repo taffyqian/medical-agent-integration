@@ -127,24 +127,20 @@ def orchestrate(
     symptoms: List[str],
     patient_name: Optional[str] = None,
     progress_callback=None,
-    lang: str = "zh-Hans",
 ) -> Dict:
     state = load_session(session_id)
 
     if patient_name:
         state["patient_name"] = patient_name
-    for s in symptoms:
-        if s not in state["symptoms_history"]:
-            state["symptoms_history"].append(s)
-    if symptoms:
-        state["most_recent_symptom"] = symptoms[-1]
 
+    # --- Step 0: 记录原始输入（审计用，不进入 symptoms_history）---
     state["events"].append({
         "stage": "input_received",
         "at": _now_iso(),
         "symptoms": symptoms,
     })
 
+    # --- Step 1: 紧急检测（用原始输入，因为关键词可能出现在整句中）---
     if progress_callback:
         progress_callback("emergency_check")
     emerg = emergency_escalator(symptoms)
@@ -155,6 +151,13 @@ def orchestrate(
     })
 
     if emerg.get("is_emergency"):
+        # 紧急：直接用原句加入历史
+        for s in symptoms:
+            if s not in state["symptoms_history"]:
+                state["symptoms_history"].append(s)
+        if symptoms:
+            state["most_recent_symptom"] = symptoms[-1]
+
         state["severity"] = "emergency"
         state["workflow_stage"] = "escalated"
         save_session(session_id, state)
@@ -175,18 +178,37 @@ def orchestrate(
             "state": state,
         }
 
+    # --- Step 2: 症状分析（AI 返回标准化症状）---
     if progress_callback:
         progress_callback("symptom_analysis")
-    analysis = analyze_symptoms(symptoms, lang=lang)
+    analysis = analyze_symptoms(symptoms)
     state["severity"] = analysis.get("assessed_severity")
     possible_causes = analysis.get("possible_causes", [])
     ai_disclaimer = analysis.get("disclaimer", "")
+
+    # 用 AI 返回的**标准化症状**更新 symptoms_history
+    ai_normalized = []
+    for rec in analysis.get("recommendations", []):
+        sym = rec.get("symptom")
+        if sym and sym not in ai_normalized:
+            ai_normalized.append(sym)
+
+    # 优先用 AI 标准化症状；如果 AI 返回空，回退到原句
+    normalized_for_history = ai_normalized if ai_normalized else symptoms
+    for s in normalized_for_history:
+        if s not in state["symptoms_history"]:
+            state["symptoms_history"].append(s)
+    if normalized_for_history:
+        state["most_recent_symptom"] = normalized_for_history[-1]
+
     state["events"].append({
         "stage": "symptom_analysis",
         "at": _now_iso(),
         "result": analysis,
+        "normalized_symptoms": ai_normalized,
     })
 
+    # --- Step 3: 药品查询 ---
     if progress_callback:
         progress_callback("drug_lookup")
     recommendations = analysis.get("recommendations", [])
@@ -197,7 +219,7 @@ def orchestrate(
             continue
         info = rec.get("drug_info") or drug_lookup(drug_name)
         enriched.append({
-            "symptoms": rec.get("symptoms", []),
+            "symptoms": [rec.get("symptom")] if rec.get("symptom") else [],
             "drug_name": drug_name,
             "drug_info": info,
             "usage_advice": rec.get("usage_advice", ""),
@@ -213,13 +235,13 @@ def orchestrate(
         })
     state["recommendations"] = enriched
 
+    # --- Step 4: 预约（用标准化症状名）---
     if progress_callback:
         progress_callback("appointment")
-    reason = ", ".join(symptoms)
+    reason = ", ".join(normalized_for_history)
     appointment = schedule_appointment(
         patient_name=state.get("patient_name") or "Unknown",
         reason=reason,
-        lang=lang,
     )
     state["appointment"] = appointment
     state["events"].append({
@@ -228,6 +250,7 @@ def orchestrate(
         "result": appointment,
     })
 
+    # --- Step 5: 写回 ---
     if progress_callback:
         progress_callback("completed")
     state["workflow_stage"] = "completed"
