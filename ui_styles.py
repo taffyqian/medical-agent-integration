@@ -93,31 +93,34 @@ def inject_css():
         }
         [data-testid="stSidebar"] .card { padding: 0.85rem 1rem; }
 
+        /* 按钮：国际 SaaS 风 */
         .stButton > button {
             border-radius: 8px; font-weight: 600;
             transition: all 0.15s ease;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #d4d4d8;
             color: #18181b;
             background: #ffffff;
+            font-size: 0.86rem;
+            padding: 0.5rem 1rem;
         }
         .stButton > button:hover {
-            border-color: #94a3b8; background: #f4f4f5;
+            border-color: #a1a1aa; background: #f4f4f5;
         }
+        /* 主按钮：黑底白字（国际 SaaS 风） */
         .stButton > button[kind="primary"] {
-            background: #eef2ff !important;
-            color: #4f46e5 !important;
-            border: 1px solid #c7d2fe !important;
-            font-size: 0.88rem !important;
-            font-weight: 700 !important;
-            padding: 0.55rem 1rem !important;
+            background: #18181b !important;
+            color: #ffffff !important;
+            border: 1px solid #18181b !important;
+            font-size: 0.86rem !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
             border-radius: 8px !important;
-            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
         }
         .stButton > button[kind="primary"]:hover {
-            background: #e0e7ff !important;
-            border-color: #a5b4fc !important;
-            color: #4338ca !important;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+            background: #27272a !important;
+            border-color: #27272a !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
         }
         .stButton > button[kind="primary"]:disabled {
             background: #f4f4f5 !important; color: #a1a1aa !important;
@@ -141,7 +144,7 @@ def inject_css():
             font-family: "SF Mono", Menlo, monospace;
         }
 
-        /* ===== 进度条：横向 chip ===== */
+        /* ===== 进度条：横向 chip + 动画 ===== */
         .progress-row {
             display: flex; align-items: center; gap: 0.5rem;
             padding: 0.2rem 0; flex-wrap: wrap;
@@ -171,87 +174,46 @@ def inject_css():
             background: currentColor; opacity: 0.9;
         }
 
-        /* 1. 进行中的圆点：脉冲呼吸 */
         @keyframes pulse-ring {
-            0% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5);
-                transform: scale(1);
-            }
-            70% {
-                box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
-                transform: scale(1.05);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-                transform: scale(1);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); transform: scale(1); }
+            70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); transform: scale(1.05); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); transform: scale(1); }
         }
         .progress-chip.running .progress-dot {
             animation: pulse-ring 1.8s ease-in-out infinite;
             background: #4f46e5;
-            width: 7px;
-            height: 7px;
+            width: 7px; height: 7px;
         }
 
-        /* 2. 进行中的 chip：轻微淡入发光 */
         @keyframes glow {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.15);
-            }
-            50% {
-                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-            }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.15); }
+            50% { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12); }
         }
-        .progress-chip.running {
-            animation: glow 2s ease-in-out infinite;
-        }
+        .progress-chip.running { animation: glow 2s ease-in-out infinite; }
 
-        /* 3. 完成 chip：绿色圆点 + 淡绿光晕 */
         .progress-chip.done .progress-dot {
-            background: #10b981;
-            width: 6px;
-            height: 6px;
+            background: #10b981; width: 6px; height: 6px;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
-
-        /* 4. chip 之间：连接线 */
         .progress-chip + .progress-chip::before {
-            content: "";
-            position: absolute;
-            left: -12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 8px;
-            height: 2px;
-            background: #e5e7eb;
-            border-radius: 1px;
+            content: ""; position: absolute;
+            left: -12px; top: 50%; transform: translateY(-50%);
+            width: 8px; height: 2px;
+            background: #e5e7eb; border-radius: 1px;
         }
-        .progress-chip.done + .progress-chip::before {
-            background: #a7f3d0;
-        }
+        .progress-chip.done + .progress-chip::before { background: #a7f3d0; }
         .progress-chip.done + .progress-chip.running::before {
             background: linear-gradient(90deg, #a7f3d0 0%, #c7d2fe 100%);
         }
 
-        /* 5. 进度条底部 shimmer 光带 */
         @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
         .progress-shimmer {
-            height: 2px;
-            margin-top: 0.6rem;
-            border-radius: 999px;
-            background: linear-gradient(
-                90deg,
-                transparent 0%,
-                rgba(79, 70, 229, 0.4) 50%,
-                transparent 100%
-            );
+            height: 2px; margin-top: 0.6rem; border-radius: 999px;
+            background: linear-gradient(90deg, transparent 0%,
+                rgba(79, 70, 229, 0.4) 50%, transparent 100%);
             background-size: 200% 100%;
             animation: shimmer 2.5s linear infinite;
         }

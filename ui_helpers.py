@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 
 # ============================================================
-# FDA 警告标题翻译表（保留，当前不使用）
+# FDA 警告标题翻译表（保留备用，当前不启用）
 # ============================================================
 WARNING_HEADER_MAP = {
     "zh-Hans": {
@@ -91,9 +91,18 @@ def format_fda_warnings(warnings: str, lang: str) -> str:
     # 清理前缀
     warnings = re.sub(r"^(Warnings|WARNINGS)\s+", "", warnings.strip())
 
-    # 常见英文标题加粗换行（不翻译，只让结构清晰）
+    # 英文标题加粗（第一个标题 margin-top=0，其余 0.6rem）
+    _heading_count = {"n": 0}
+
     def bold_heading(m):
-        return f"<br><br><strong class='fda-heading'>{m.group(1)}:</strong><br>"
+        _heading_count["n"] += 1
+        top = "0" if _heading_count["n"] == 1 else "0.6rem"
+        return (
+            f"<div style='margin-top:{top};margin-bottom:0.3rem;'>"
+            f"<strong class='fda-heading' "
+            f"style='font-size:0.88rem;font-weight:700;'>"
+            f"{m.group(1)}:</strong></div>"
+        )
 
     warnings = re.sub(
         r"(?<!\w)([A-Z][a-zA-Z\s']{2,35}?)\s*(?:warning|alert|Warning|Alert)\s*:",
@@ -104,12 +113,24 @@ def format_fda_warnings(warnings: str, lang: str) -> str:
     # bullet 转列表
     if "•" in warnings:
         parts = warnings.split("•")
-        warnings = parts[0] + "<ul>" + "".join(
-            f"<li>{p.strip()}</li>" for p in parts[1:] if p.strip()
-        ) + "</ul>"
+        warnings = (
+            parts[0]
+            + "<ul style='margin:0.4rem 0 0.6rem 1.1rem;padding:0;"
+              "list-style-type:disc;'>"
+            + "".join(
+                f"<li style='margin-bottom:0.25rem;color:#57534e;"
+                f"line-height:1.55;'>{p.strip()}</li>"
+                for p in parts[1:] if p.strip()
+            )
+            + "</ul>"
+        )
 
     # 段落化
-    warnings = re.sub(r"\n{2,}", "<br><br>", warnings)
-    warnings = warnings.replace("\n", "<br>")
+    warnings = re.sub(r"\n{2,}", "<br>", warnings).replace("\n", "<br>")
+
+    # 去掉开头多余的空行 / <br> / 空白
+    warnings = re.sub(r"^(<br\s*/?>\s*)+", "", warnings)
+    warnings = re.sub(r"^[\s\n]+", "", warnings)
+    warnings = warnings.strip()
 
     return warnings
