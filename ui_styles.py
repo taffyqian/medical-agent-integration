@@ -7,141 +7,173 @@ def inject_css():
         """
         <style>
         html, body, [class*="css"] {
-            font-family: -apple-system, "SF Pro Display", "PingFang SC",
-                         "PingFang TC", "Microsoft YaHei", sans-serif;
+            font-family: -apple-system, "SF Pro Text", "Inter",
+                         "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
-        .stApp { background: linear-gradient(180deg, #f5f9fc 0%, #eef4f8 100%); }
+
+        .stApp { background-color: #fafafa; }
         [data-testid="stHeader"] { background: transparent; }
 
         .hero-title {
-            font-size: 2.6rem; font-weight: 800;
-            background: linear-gradient(90deg, #0e7490 0%, #14b8a6 60%, #22c55e 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; margin-bottom: 0.2rem; letter-spacing: -0.5px;
+            font-size: 1.9rem; font-weight: 800; color: #0a0a0a;
+            margin-bottom: 0.35rem; letter-spacing: -0.6px;
         }
-        .hero-subtitle { color: #64748b; font-size: 1rem; margin-bottom: 1.5rem; }
+        .hero-subtitle {
+            color: #71717a; font-size: 0.9rem;
+            margin-bottom: 2rem; line-height: 1.55;
+        }
 
         .card {
-            background: #ffffff; border-radius: 14px;
-            padding: 1.25rem 1.5rem;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06),
-                        0 4px 16px rgba(15, 23, 42, 0.04);
-            margin-bottom: 1rem; border: 1px solid rgba(15, 23, 42, 0.04);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.3rem 1.5rem;
+            margin-bottom: 1rem;
         }
-
-        .greeting-card {
-            background: linear-gradient(135deg, #ecfeff 0%, #f0fdfa 100%);
-            border-left: 4px solid #14b8a6; border-radius: 12px;
-            padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;
-        }
-        .greeting-title { font-size: 1.3rem; font-weight: 700; color: #0f766e; }
-        .greeting-sub { color: #475569; font-size: 0.92rem; margin-top: 0.3rem; }
 
         .badge {
-            display: inline-block; padding: 0.25rem 0.75rem;
-            border-radius: 999px; font-size: 0.78rem;
-            font-weight: 600; letter-spacing: 0.3px;
+            display: inline-block; padding: 0.2rem 0.55rem;
+            border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.2px;
         }
-        .badge-emergency { background: #fee2e2; color: #b91c1c; }
-        .badge-normal { background: #dcfce7; color: #15803d; }
-        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-emergency { background: #fee2e2; color: #991b1b; }
+        .badge-normal { background: #ecfdf5; color: #065f46; }
+        .badge-info { background: #eef2ff; color: #3730a3; }
 
         .label {
-            font-size: 0.78rem; color: #64748b; text-transform: uppercase;
-            letter-spacing: 0.6px; font-weight: 600; margin-bottom: 0.25rem;
+            font-size: 0.72rem; color: #71717a;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            font-weight: 600; margin-bottom: 0.2rem;
         }
-        .value { font-size: 1rem; color: #0f172a; font-weight: 500; }
+        .value {
+            font-size: 0.92rem; color: #18181b; font-weight: 500;
+        }
 
         .drug-card {
-            background: #f8fafc; border-left: 4px solid #14b8a6;
-            border-radius: 8px; padding: 1rem 1.2rem; margin: 0.6rem 0;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.1rem 1.3rem;
+            margin: 0.7rem 0;
+            display: flex; flex-direction: column; gap: 0.35rem;
         }
-        .drug-name { font-size: 1.1rem; font-weight: 700; color: #0f766e; }
-        .drug-for { font-size: 0.85rem; color: #475569; margin-top: 0.25rem; }
+        .drug-name {
+            font-size: 1.05rem; font-weight: 700; color: #18181b;
+        }
+        .drug-for {
+            font-size: 0.84rem; color: #52525b;
+        }
+        .drug-for strong { color: #0d9488; font-weight: 600; }
 
-        .fda-heading { color: #b91c1c; font-size: 0.95rem;
-                       display: inline-block; margin-top: 0.5rem; }
-        .fda-hl {
-            background: #fef3c7; color: #92400e; padding: 0.05rem 0.25rem;
-            border-radius: 4px; font-weight: 600;
+        .fda-heading {
+            color: #b91c1c; font-size: 0.88rem; font-weight: 700;
+            display: inline-block;
         }
         .fda-content {
-            background: #fffbeb; border-left: 3px solid #f59e0b;
-            border-radius: 8px; padding: 1rem 1.2rem; font-size: 0.88rem;
-            color: #44403c; line-height: 1.7; max-height: 500px; overflow-y: auto;
+            background: #fffbeb; border: 1px solid #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 10px; padding: 1rem 1.2rem;
+            font-size: 0.86rem; color: #451a03; line-height: 1.65;
         }
-        .fda-content ul { margin: 0.5rem 0 0.5rem 1rem; padding: 0; }
-        .fda-content li { margin-bottom: 0.4rem; }
+        .fda-hl {
+            background: #fef3c7; color: #92400e;
+            padding: 0.05rem 0.28rem; border-radius: 3px;
+            font-weight: 600;
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: #ffffff; border-right: 1px solid #e5e7eb;
+        }
+        [data-testid="stSidebar"] .card {
+            padding: 0.85rem 1rem;
+        }
+
+        .stButton > button {
+            border-radius: 8px; font-weight: 600;
+            transition: all 0.15s ease;
+            border: 1px solid #d4d4d8;
+            color: #18181b;
+            background: #ffffff;
+        }
+        .stButton > button:hover {
+            border-color: #a1a1aa; background: #f4f4f5;
+        }
+        .stButton > button[kind="primary"] {
+            background: #4f46e5 !important;
+            color: #ffffff !important;
+            border: 1px solid #4f46e5 !important;
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+        }
+        .stButton > button[kind="primary"]:hover {
+            background: #4338ca !important;
+            border-color: #4338ca !important;
+        }
+        .stButton > button[kind="primary"]:disabled {
+            background: #e4e4e7 !important; color: #a1a1aa !important;
+            border-color: #e4e4e7 !important;
+        }
+        .stTextInput > div > div > input { border-radius: 8px; }
 
         .event-item {
             display: flex; align-items: center; padding: 0.5rem 0;
-            border-bottom: 1px dashed #e2e8f0; font-size: 0.88rem;
+            border-bottom: 1px dashed #e5e7eb; font-size: 0.86rem;
         }
         .event-item:last-child { border-bottom: none; }
         .event-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #14b8a6; margin-right: 0.75rem; flex-shrink: 0;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #4f46e5; margin-right: 0.75rem; flex-shrink: 0;
         }
-        .event-stage { font-weight: 600; color: #334155; min-width: 130px; }
+        .event-stage { font-weight: 600; color: #27272a; min-width: 140px; }
         .event-time {
-            color: #94a3b8; font-size: 0.78rem;
+            color: #a1a1aa; font-size: 0.76rem;
             font-family: "SF Mono", Menlo, monospace;
         }
 
-        .progress-step {
-            display: flex; align-items: center; padding: 0.5rem 0;
-            font-size: 0.92rem;
+        .progress-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.3rem 0; flex-wrap: wrap;
         }
-        .progress-step-icon {
-            width: 24px; text-align: center; margin-right: 0.75rem;
+        .progress-chip {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.25rem 0.7rem; border-radius: 999px;
+            font-size: 0.76rem; font-weight: 600;
+            border: 1px solid #e5e7eb; background: #ffffff;
+            color: #71717a;
         }
-        .progress-step.done { color: #15803d; }
-        .progress-step.running { color: #0e7490; font-weight: 600; }
-        .progress-step.waiting { color: #94a3b8; }
+        .progress-chip.done {
+            background: #ecfdf5; border-color: #d1fae5; color: #065f46;
+        }
+        .progress-chip.running {
+            background: #eef2ff; border-color: #c7d2fe; color: #3730a3;
+        }
+        .progress-chip.waiting {
+            background: #fafafa; border-color: #e5e7eb; color: #a1a1aa;
+        }
+        .progress-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: currentColor; opacity: 0.9;
+        }
 
         .empty-state {
-            text-align: center; padding: 3rem 2rem;
-            background: #ffffff; border-radius: 14px;
-            border: 1px dashed #cbd5e1;
+            text-align: center; padding: 3.5rem 2rem;
+            background: #ffffff; border: 1px dashed #d4d4d8;
+            border-radius: 12px;
         }
         .empty-title {
-            font-size: 1.4rem; font-weight: 700; color: #0f766e;
-            margin-bottom: 0.5rem;
+            font-size: 1.25rem; font-weight: 800; color: #0a0a0a;
+            margin-bottom: 0.5rem; letter-spacing: -0.3px;
         }
-        .empty-desc { color: #64748b; margin-bottom: 1.5rem; }
-
-        [data-testid="stSidebar"] {
-            background: #ffffff; border-right: 1px solid #e2e8f0;
-        }
-
-        /* 主按钮：清晰的大按钮 */
-        .stButton > button {
-            border-radius: 10px; font-weight: 600;
-            transition: all 0.15s ease;
-        }
-        .stButton > button[kind="primary"] {
-            background: linear-gradient(90deg, #0e7490, #14b8a6) !important;
-            color: #ffffff !important;
-            border: none !important;
-            font-size: 1.05rem !important;
-            font-weight: 700 !important;
-            padding: 0.75rem 1.5rem !important;
-            letter-spacing: 0.3px;
-        }
-        .stButton > button[kind="primary"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
-        }
-        .stButton > button[kind="primary"]:disabled {
-            background: #e2e8f0 !important;
-            color: #94a3b8 !important;
-        }
-
-        .stTextInput > div > div > input { border-radius: 8px; }
+        .empty-desc { color: #71717a; font-size: 0.88rem; line-height: 1.6; }
 
         .footer {
-            text-align: center; color: #94a3b8;
-            font-size: 0.78rem; padding: 2rem 0 1rem 0;
+            text-align: center; color: #a1a1aa;
+            font-size: 0.76rem; padding: 2.5rem 0 1.5rem 0;
+            letter-spacing: 0.3px;
         }
         </style>
         """,
