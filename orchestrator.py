@@ -147,6 +147,9 @@ def confirm_appointment(session_id: str, reason: str,
         when=when_iso,
         lang=lang,
     )
+    # 强制用用户选的时间覆盖 slot_utc（不信任云端返回值）
+    if result and result.get("scheduled"):
+        result["slot_utc"] = when_iso
     return result
 
 
