@@ -5,6 +5,9 @@ from ui_texts import QUICK_SYMPTOMS, display_drug_name
 from ui_helpers import format_local_time, format_fda_warnings
 
 
+# ============================================================
+# 侧边栏
+# ============================================================
 def render_sidebar(t):
     with st.sidebar:
         lang_options = {"zh-Hans": "简体中文", "zh-Hant": "繁體中文", "en": "English"}
@@ -69,6 +72,9 @@ def render_sidebar(t):
             st.caption(t("no_state"))
 
 
+# ============================================================
+# 进度条
+# ============================================================
 def render_progress(t, current_stage, placeholder):
     stage_labels = {
         "emergency_check": t("stage_emergency_check"),
@@ -105,6 +111,9 @@ def render_progress(t, current_stage, placeholder):
     placeholder.markdown(html, unsafe_allow_html=True)
 
 
+# ============================================================
+# 结果卡片
+# ============================================================
 def render_result_turn(t, r, turn_input, turn_no):
     with st.expander(
         f"{t('turn', n=turn_no)}  ·  {', '.join(turn_input)}",
@@ -115,12 +124,17 @@ def render_result_turn(t, r, turn_input, turn_no):
         # =========================================================
         if r["action"] == "emergency_escalation":
             lang = st.session_state["lang"]
+
+            # 主提示 + 常见号码（按语言）
             if lang == "zh-Hant":
-                hotline = "119（台灣）· 999（香港）· 120（中國內地）"
+                hotline_main = "請立即撥打當地急救電話"
+                hotline_numbers = "999（香港）· 119（台灣）· 120（中國內地）· 112（歐盟）"
             elif lang == "en":
-                hotline = "911 (US) · 999 (UK) · 120 (China)"
+                hotline_main = "Call your local emergency services immediately"
+                hotline_numbers = "911 (US) · 999 (UK/HK) · 120 (China) · 112 (EU)"
             else:
-                hotline = "120（中国内地）· 119（台湾）· 999（香港）"
+                hotline_main = "请立即拨打当地急救电话"
+                hotline_numbers = "120（中国内地）· 999（香港）· 119（台湾）· 112（欧盟）"
 
             matched_str = " · ".join(r.get("matched", []))
 
@@ -128,22 +142,27 @@ def render_result_turn(t, r, turn_input, turn_no):
                 f'<div style="background:#ffffff;border:1px solid #fecaca;'
                 f'border-left:3px solid #dc2626;border-radius:12px;'
                 f'padding:1.2rem 1.4rem;margin-top:0.4rem;">'
+                # EMERGENCY 标签
                 f'<div style="display:inline-block;background:#fee2e2;'
                 f'color:#b91c1c;font-size:0.72rem;font-weight:700;'
                 f'letter-spacing:1.2px;padding:0.3rem 0.7rem;'
                 f'border-radius:6px;text-transform:uppercase;">'
                 f'{t("emergency")}</div>'
+                # Message
                 f'<div style="margin-top:0.9rem;font-size:1rem;'
                 f'color:#1e293b;line-height:1.55;">'
                 f'{t("emergency_msg")}</div>'
+                # 急救电话块（两行）
                 f'<div style="margin-top:1rem;background:#fef2f2;'
                 f'border-radius:10px;padding:0.9rem 1.2rem;'
-                f'display:flex;align-items:center;justify-content:center;'
-                f'gap:0.5rem;">'
-                f'<span style="font-size:1.1rem;">📞</span>'
-                f'<span style="font-size:1.05rem;font-weight:700;'
-                f'color:#b91c1c;letter-spacing:0.3px;">{hotline}</span>'
+                f'text-align:center;">'
+                f'<div style="font-size:1rem;font-weight:700;'
+                f'color:#b91c1c;margin-bottom:0.4rem;">'
+                f'📞 {hotline_main}</div>'
+                f'<div style="font-size:0.85rem;color:#7f1d1d;'
+                f'letter-spacing:0.2px;">{hotline_numbers}</div>'
                 f'</div>'
+                # Matched symptoms
                 f'<div style="margin-top:1.1rem;display:grid;'
                 f'grid-template-columns:110px 1fr;gap:0.5rem 1rem;'
                 f'font-size:0.88rem;">'
@@ -234,7 +253,6 @@ def render_result_turn(t, r, turn_input, turn_no):
             # ---- 推荐药品 ----
             recs = r.get("recommendations", [])
             if recs:
-                # 卡片式标题（浅灰底 + 左青条 + 图标）
                 st.markdown(
                     f'<div style="'
                     f'background:#f1f5f9;'
@@ -255,7 +273,6 @@ def render_result_turn(t, r, turn_input, turn_no):
                     unsafe_allow_html=True,
                 )
 
-                # 收集追问（供 app.py 底部显示）
                 all_questions = []
 
                 for rec in recs:
@@ -266,7 +283,6 @@ def render_result_turn(t, r, turn_input, turn_no):
                         rec["drug_name"], st.session_state["lang"]
                     )
 
-                    # --- 药品卡 ---
                     drug_html = (
                         f'<div class="drug-card">'
                         f'<div class="drug-name">💊 {display_name}</div>'
@@ -276,7 +292,7 @@ def render_result_turn(t, r, turn_input, turn_no):
                     )
                     st.markdown(drug_html, unsafe_allow_html=True)
 
-                    # --- 医疗建议 ---
+                    # 医疗建议块
                     advice_rows = []
                     if rec.get("usage_advice"):
                         advice_rows.append((t("usage_advice"), rec["usage_advice"], "#0e7490", "#f0fdfa"))
@@ -320,12 +336,12 @@ def render_result_turn(t, r, turn_input, turn_no):
                         )
                         st.markdown(advice_html, unsafe_allow_html=True)
 
-                    # --- 收集追问 ---
+                    # 收集追问
                     for q in rec.get("followup_questions", []):
                         if q and q not in all_questions:
                             all_questions.append(q)
 
-                    # --- FDA 警告折叠 ---
+                    # FDA 警告折叠
                     if info.get("ok") and info.get("warnings"):
                         with st.expander(f"📄 {t('view_warnings')}"):
                             formatted = format_fda_warnings(
@@ -338,7 +354,6 @@ def render_result_turn(t, r, turn_input, turn_no):
                     elif not info.get("ok"):
                         st.caption(t("no_fda"))
 
-                # 把追问存到 result
                 if all_questions:
                     r["_followup_questions"] = all_questions
 
