@@ -227,7 +227,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 unsafe_allow_html=True,
             )
 
-            # 可能原因（同字号，不同字重）
+            # 可能原因（🔍 icon + 同字号不同字重）
             possible_causes = r.get("possible_causes", [])
             if possible_causes:
                 likelihood_label = {
@@ -268,6 +268,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     '<div style="padding:0.75rem 1.1rem;'
                     'display:flex;align-items:center;gap:0.5rem;'
                     'border-bottom:1px solid #f4f4f5;">'
+                    '<span style="font-size:0.9rem;">🔍</span>'
                     '<span style="font-size:0.72rem;font-weight:800;'
                     'color:#52525b;letter-spacing:0.8px;text-transform:uppercase;">'
                     + t("possible_causes") + '</span></div>'
@@ -404,7 +405,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
 
 # ============================================================
-# 预约 UI（状态机，全部中性色）
+# 预约 UI（状态机，统一卡片样式）
 # ============================================================
 def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
     state_key = f"appt_state_{turn_no}"
@@ -417,14 +418,19 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
 
     current = st.session_state[state_key]
 
-    # 状态 1: 询问
+    # 状态 1: 询问（🩺 icon）
+        # 状态 1: 询问（🩺 icon，左边靛蓝条 + 微阴影）
     if current == "asking":
         st.markdown(
-            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;'
-            f'border-radius:10px;">'
-            f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
-            f'{t("ask_appointment")}</div></div>',
+            f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
+            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'border-left:3px solid #4f46e5;'
+            f'border-radius:10px;'
+            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.6rem;">'
+            f'<span style="font-size:1rem;">🩺</span>'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'{t("ask_appointment")}</span></div></div>',
             unsafe_allow_html=True,
         )
         col1, col2 = st.columns(2)
@@ -439,14 +445,18 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
                 st.session_state[state_key] = "declined"
                 st.rerun()
 
-    # 状态 2: 选日期
+    # 状态 2: 选日期（📅 icon）
     elif current == "choosing_date":
         st.markdown(
-            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;'
-            f'border-radius:10px;">'
-            f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
-            f'📅 {t("choose_date")}</div></div>',
+            f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
+            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'border-left:3px solid #4f46e5;'
+            f'border-radius:10px;'
+            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.6rem;">'
+            f'<span style="font-size:1rem;">📅</span>'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'{t("choose_date")}</span></div></div>',
             unsafe_allow_html=True,
         )
         dates = r.get("available_dates", [])
@@ -474,14 +484,18 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
             st.session_state[state_key] = "declined"
             st.rerun()
 
-    # 状态 3: 选时段
+    # 状态 3: 选时段（⏰ icon）
     elif current == "choosing_time":
         st.markdown(
-            f'<div style="margin-top:1rem;padding:0.9rem 1.1rem;'
-            f'background:#fafafa;border:1px solid #e5e7eb;'
-            f'border-radius:10px;">'
-            f'<div style="font-size:0.9rem;font-weight:600;color:#18181b;">'
-            f'⏰ {t("choose_time")}</div></div>',
+            f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
+            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'border-left:3px solid #4f46e5;'
+            f'border-radius:10px;'
+            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.6rem;">'
+            f'<span style="font-size:1rem;">⏰</span>'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'{t("choose_time")}</span></div></div>',
             unsafe_allow_html=True,
         )
         slots = r.get("time_slots", [])
