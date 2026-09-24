@@ -309,12 +309,15 @@ if user_input and user_input.strip():
 # ============================================================
 if st.session_state.history:
     last_result = st.session_state.history[-1]["result"]
-    disclaimer_data = last_result.get("disclaimer", {})
     lang = st.session_state["lang"]
-    disclaimer_text = (
-        disclaimer_data.get("zh", "") if lang in ("zh-Hans", "zh-Hant")
-        else disclaimer_data.get("en", "")
-    )
+    disclaimer_data = last_result.get("disclaimer", "")
+    if isinstance(disclaimer_data, dict):
+        disclaimer_text = (
+            disclaimer_data.get("zh", "") if lang in ("zh-Hans", "zh-Hant")
+            else disclaimer_data.get("en", "")
+        )
+    else:
+        disclaimer_text = str(disclaimer_data) if disclaimer_data else ""
     if disclaimer_text:
         st.markdown(
             f'<div style="margin-top:2rem;padding:1rem 1.2rem;'
