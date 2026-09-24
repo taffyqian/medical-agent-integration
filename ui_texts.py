@@ -70,6 +70,7 @@ TEXTS = {
         "summary_causes": "可能原因",
         "summary_drugs": "推荐药品",
         "summary_appointment": "预约时间",
+        "includes_emergency": "含紧急症状",
     },
     "zh-Hant": {
         "title": "Medical Agent",
@@ -140,6 +141,7 @@ TEXTS = {
         "summary_causes": "可能原因",
         "summary_drugs": "推薦藥品",
         "summary_appointment": "預約時間",
+        "includes_emergency": "含緊急症狀",
     },
     "en": {
         "title": "Medical Agent",
@@ -210,6 +212,7 @@ TEXTS = {
         "summary_causes": "Possible Causes",
         "summary_drugs": "Recommended Drugs",
         "summary_appointment": "Appointment",
+        "includes_emergency": "includes emergency symptom",
     },
 }
 

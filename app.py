@@ -90,13 +90,18 @@ if len(st.session_state.history) >= 2:
             if dn and dn not in all_drugs:
                 all_drugs.append(dn)
 
-    # 汇总可能原因（去重）
+    # 汇总可能原因（严格去重：忽略大小写 + 首尾空格）
     all_causes = []
+    seen_causes = set()
     for turn in st.session_state.history:
         for c in turn["result"].get("possible_causes", []):
-            cond = c.get("condition", "")
-            if cond and cond not in all_causes:
+            cond = c.get("condition", "").strip()
+            key = cond.lower()
+            if cond and key not in seen_causes:
                 all_causes.append(cond)
+                seen_causes.add(key)
+    # 限制最多 5 个，避免总结卡片过长
+    all_causes = all_causes[:5]
 
     # 计算"最高严重程度" + 紧急症状列表
     all_severities = []
@@ -137,7 +142,7 @@ if len(st.session_state.history) >= 2:
     severity_display = latest_severity
     if emergency_symptoms:
         unique_emerg = list(set(emergency_symptoms))
-        severity_display = f'{latest_severity}（含紧急症状：{" · ".join(unique_emerg)}）'
+        severity_display = f'{latest_severity} ({t("includes_emergency")}: {" · ".join(unique_emerg)})'
 
     sum_html = (
         '<div style="background:#ffffff;border:1px solid #cbd5e1;'
