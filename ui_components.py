@@ -227,7 +227,7 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 unsafe_allow_html=True,
             )
 
-            # 可能原因（🔍 icon + 同字号不同字重）
+            # 可能原因（🔍 icon + 浅青标题栏 + 与医疗建议同字号）
             possible_causes = r.get("possible_causes", [])
             if possible_causes:
                 likelihood_label = {
@@ -250,14 +250,14 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                     if condition:
                         cause_rows += (
                             f'<div style="display:flex;gap:0.9rem;'
-                            f'align-items:flex-start;padding:0.6rem 0.9rem;'
+                            f'align-items:flex-start;padding:0.55rem 0.9rem;'
                             f'margin-bottom:0.35rem;background:#fafafa;'
                             f'border-radius:8px;">'
                             f'<div style="flex-shrink:0;min-width:58px;'
-                            f'font-size:0.7rem;font-weight:600;color:{color};'
+                            f'font-size:0.68rem;font-weight:600;color:{color};'
                             f'padding-top:0.15rem;letter-spacing:0.2px;">'
                             f'{lbl}</div>'
-                            f'<div style="font-size:0.86rem;'
+                            f'<div style="font-size:0.82rem;'
                             f'color:#18181b;line-height:1.55;">'
                             f'<span style="font-weight:600;">{condition}</span>'
                             + (f' <span style="color:#71717a;font-weight:400;">— {note}</span>' if note else "") +
@@ -265,12 +265,13 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                         )
                 cause_html = (
                     '<div class="card" style="padding:0;margin-top:0.8rem;overflow:hidden;">'
-                    '<div style="padding:0.75rem 1.1rem;'
+                    '<div style="padding:0.7rem 1.1rem;'
                     'display:flex;align-items:center;gap:0.5rem;'
-                    'border-bottom:1px solid #f4f4f5;">'
+                    'background:#f0fdfa;'
+                    'border-bottom:1px solid #ccfbf1;">'
                     '<span style="font-size:0.9rem;">🔍</span>'
                     '<span style="font-size:0.72rem;font-weight:800;'
-                    'color:#52525b;letter-spacing:0.8px;text-transform:uppercase;">'
+                    'color:#0f766e;letter-spacing:0.8px;text-transform:uppercase;">'
                     + t("possible_causes") + '</span></div>'
                     '<div style="padding:0.8rem 0.9rem;">' + cause_rows + '</div>'
                     '<div style="padding:0.6rem 1.1rem;background:#fffbeb;'
@@ -279,16 +280,17 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                 )
                 st.markdown(cause_html, unsafe_allow_html=True)
 
-            # 推荐药品
+            # 推荐药品（浅青标题栏）
             recs = r.get("recommendations", [])
             if recs:
                 st.markdown(
-                    f'<div style="padding:0.6rem 0;margin-top:1.2rem;'
-                    f'margin-bottom:0.2rem;display:flex;align-items:center;gap:0.5rem;'
-                    f'border-bottom:1px solid #f4f4f5;">'
+                    f'<div style="padding:0.7rem 1.1rem;margin-top:1.2rem;'
+                    f'margin-bottom:0.3rem;display:flex;align-items:center;gap:0.5rem;'
+                    f'background:#f0fdfa;border-radius:10px 10px 0 0;'
+                    f'border-bottom:1px solid #ccfbf1;">'
                     f'<span style="font-size:0.9rem;">💊</span>'
                     f'<span style="font-size:0.76rem;font-weight:800;'
-                    f'color:#52525b;letter-spacing:0.8px;text-transform:uppercase;">'
+                    f'color:#0f766e;letter-spacing:0.8px;text-transform:uppercase;">'
                     f'{t("drugs")}</span></div>',
                     unsafe_allow_html=True,
                 )
@@ -335,23 +337,24 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
                                 f'<div style="display:flex;gap:0.9rem;'
                                 f'align-items:flex-start;background:#fafafa;'
                                 f'border-radius:8px;'
-                                f'padding:0.65rem 0.9rem;{margin}">'
+                                f'padding:0.6rem 0.9rem;{margin}">'
                                 f'<div style="flex-shrink:0;min-width:70px;'
                                 f'font-size:0.78rem;font-weight:700;color:#71717a;'
                                 f'letter-spacing:0.2px;line-height:1.5;">{label}</div>'
-                                f'<div style="font-size:0.86rem;color:#18181b;'
+                                f'<div style="font-size:0.82rem;color:#18181b;'
                                 f'line-height:1.6;">{text}</div>'
                                 f'</div>'
                             )
                         st.markdown(
                             '<div style="background:#ffffff;border:1px solid #e5e7eb;'
                             'border-radius:12px;padding:0;margin-top:0.7rem;overflow:hidden;">'
-                            '<div style="padding:0.75rem 1.1rem;'
+                            '<div style="padding:0.7rem 1.1rem;'
                             'display:flex;align-items:center;gap:0.5rem;'
-                            'border-bottom:1px solid #f4f4f5;">'
+                            'background:#f0fdfa;'
+                            'border-bottom:1px solid #ccfbf1;">'
                             '<span style="font-size:0.9rem;">💡</span>'
                             '<span style="font-size:0.76rem;font-weight:800;'
-                            'color:#52525b;letter-spacing:0.8px;text-transform:uppercase;">'
+                            'color:#0f766e;letter-spacing:0.8px;text-transform:uppercase;">'
                             + t("medical_guidance") + '</span></div>'
                             '<div style="padding:0.7rem 0.9rem;'
                             'display:flex;flex-direction:column;gap:0.35rem;">'
@@ -405,7 +408,8 @@ def render_result_turn(t, r, turn_input, turn_no, on_confirm_appointment=None):
 
 
 # ============================================================
-# 预约 UI（状态机，统一卡片样式）
+# 预约 UI（状态机）
+# 方案 B：卡片淡靛蓝底 + 靛蓝边 + 加强阴影
 # ============================================================
 def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
     state_key = f"appt_state_{turn_no}"
@@ -418,18 +422,17 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
 
     current = st.session_state[state_key]
 
-    # 状态 1: 询问（🩺 icon）
-        # 状态 1: 询问（🩺 icon，左边靛蓝条 + 微阴影）
+    # 状态 1: 询问（🩺 icon + 淡靛蓝底）
     if current == "asking":
         st.markdown(
             f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
-            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'background:#eef2ff;border:1px solid #c7d2fe;'
             f'border-left:3px solid #4f46e5;'
             f'border-radius:10px;'
-            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'box-shadow:0 4px 12px rgba(79,70,229,0.08);">'
             f'<div style="display:flex;align-items:center;gap:0.6rem;">'
             f'<span style="font-size:1rem;">🩺</span>'
-            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#3730a3;">'
             f'{t("ask_appointment")}</span></div></div>',
             unsafe_allow_html=True,
         )
@@ -449,13 +452,13 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
     elif current == "choosing_date":
         st.markdown(
             f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
-            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'background:#eef2ff;border:1px solid #c7d2fe;'
             f'border-left:3px solid #4f46e5;'
             f'border-radius:10px;'
-            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'box-shadow:0 4px 12px rgba(79,70,229,0.08);">'
             f'<div style="display:flex;align-items:center;gap:0.6rem;">'
             f'<span style="font-size:1rem;">📅</span>'
-            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#3730a3;">'
             f'{t("choose_date")}</span></div></div>',
             unsafe_allow_html=True,
         )
@@ -488,13 +491,13 @@ def _render_appointment_ui(t, r, turn_no, on_confirm_appointment):
     elif current == "choosing_time":
         st.markdown(
             f'<div style="margin-top:1.1rem;padding:1rem 1.2rem;'
-            f'background:#ffffff;border:1px solid #e5e7eb;'
+            f'background:#eef2ff;border:1px solid #c7d2fe;'
             f'border-left:3px solid #4f46e5;'
             f'border-radius:10px;'
-            f'box-shadow:0 2px 8px rgba(0,0,0,0.03);">'
+            f'box-shadow:0 4px 12px rgba(79,70,229,0.08);">'
             f'<div style="display:flex;align-items:center;gap:0.6rem;">'
             f'<span style="font-size:1rem;">⏰</span>'
-            f'<span style="font-size:0.95rem;font-weight:700;color:#18181b;">'
+            f'<span style="font-size:0.95rem;font-weight:700;color:#3730a3;">'
             f'{t("choose_time")}</span></div></div>',
             unsafe_allow_html=True,
         )
